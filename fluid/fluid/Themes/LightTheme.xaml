@@ -1,0 +1,21 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  ライトテーマ用の色  -->
+    <!--  背景色  -->
+    <Color x:Key="PrimaryBackgroundColor">#FFF5F5F5</Color>
+    <!--  文字色  -->
+    <Color x:Key="PrimaryTextColor">#222222</Color>
+    <!--  ヘッダー色  -->
+    <Color x:Key="PrimaryHeaderColor">lightgray</Color>
+
+
+    <!--  SolidColorBrush を作成  -->
+    <SolidColorBrush x:Key="PrimaryBackgroundBrush" Color="{StaticResource PrimaryBackgroundColor}" />
+    <SolidColorBrush x:Key="PrimaryHeaderBrush" Color="{StaticResource PrimaryHeaderColor}" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}" />
+
+    <Style x:Key="HeaderTextBlockStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="Foreground" Value="Black"/>
+    </Style>
+
+</ResourceDictionary>

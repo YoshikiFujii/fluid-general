@@ -1,0 +1,131 @@
+﻿<Window
+    x:Class="fluid_general.Pages.ExportPDFWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:fluid_general.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="ExportPDFWindow"
+    Width="500"
+    Height="450"
+    ui:ThemeManager.IsThemeAware="True"
+    ui:TitleBar.Background="{StaticResource PrimaryHeaderBrush}"
+    ui:WindowHelper.UseModernWindowStyle="True"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <StackPanel>
+        <TextBlock
+            Margin="15,15,15,15"
+            FontSize="24"
+            Text="減点通知書を出力する" />
+        <TextBlock Margin="15,0,15,0" Text="出席しておらず、欠席登録も行っていない生徒に対して減点通知書を発行します。" />
+        <Grid Margin="20,10,20,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Row="0"
+                Grid.ColumnSpan="4"
+                Margin="0,10,0,0"
+                Text="▶ヘッダー" />
+            <TextBlock
+                Grid.Row="1"
+                VerticalAlignment="Center"
+                Text="寮長名" />
+            <TextBox
+                x:Name="HeadTextBox"
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="5"
+                Text="森戸 憲心" />
+            <TextBlock
+                Grid.Row="1"
+                Grid.Column="2"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                Text="風紀委員長名" />
+            <TextBox
+                x:Name="ChairPersonTextBox"
+                Grid.Row="1"
+                Grid.Column="3"
+                Margin="5"
+                Text="伊藤 拓見" />
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                Text="和暦(ex令和◯)" />
+            <TextBox
+                x:Name="YearTextBox"
+                Grid.Row="2"
+                Grid.Column="1"
+                Margin="5,10,5,10" />
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="2"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                Text="発行日(月・日)" />
+            <TextBox
+                x:Name="MonthTextBox"
+                Grid.Row="2"
+                Grid.Column="3"
+                Width="10"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Left"
+                Text="4" />
+            <TextBox
+                x:Name="DayTextBox"
+                Grid.Row="2"
+                Grid.Column="3"
+                Width="10"
+                Margin="0,10,0,10"
+                HorizontalAlignment="Right"
+                Text="18" />
+            <TextBlock
+                Grid.Row="3"
+                Grid.ColumnSpan="4"
+                Margin="0,10,0,0"
+                Text="▶減点内容" />
+            <TextBlock
+                Grid.Row="4"
+                VerticalAlignment="Center"
+                Text="減点点数" />
+            <TextBox
+                x:Name="PointTextBox"
+                Grid.Row="4"
+                Grid.Column="1"
+                Margin="5" />
+            <TextBlock
+                Grid.Row="5"
+                VerticalAlignment="Center"
+                Text="減点理由" />
+            <TextBox
+                x:Name="ReasonTextBox"
+                Grid.Row="5"
+                Grid.Column="1"
+                Grid.ColumnSpan="3"
+                Margin="5" />
+        </Grid>
+
+        <Button
+            Margin="15,15,15,15"
+            HorizontalAlignment="Stretch"
+            Click="ExportPDF_click"
+            Content="出力" />
+    </StackPanel>
+</Window>

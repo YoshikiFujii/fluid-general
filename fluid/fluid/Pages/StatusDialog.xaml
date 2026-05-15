@@ -1,0 +1,101 @@
+﻿<ui:ContentDialog
+    x:Class="fluid_general.Pages.StatusDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:ModernWpf.Controls;assembly=ModernWpf"
+    xmlns:controls1="clr-namespace:ModernWpf.Controls;assembly=ModernWpf.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:fluid_general.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="ステータス"
+    SecondaryButtonText="閉じる"
+    mc:Ignorable="d">
+    <StackPanel>
+        <TextBlock
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            FontSize="13"
+            Margin="10"
+            >
+            <Run Text="現在認証済みの人数を表示しています。" />
+            <LineBreak />
+            <Run Text="このデータはファイル＞エクスポートから出力することができます。" />
+        </TextBlock>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="10" />
+                <RowDefinition Height="30" />
+                <RowDefinition Height="30" />
+            </Grid.RowDefinitions>
+            <TextBlock
+                Width="70"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Text="全体" />
+            <TextBlock
+                x:Name="wholestatus"
+                Width="100"
+                VerticalAlignment="Center"
+                FontSize="16" />
+            <TextBlock
+                Grid.Row="2"
+                Width="70"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Text="１年" />
+            <TextBlock
+                x:Name="firststatus"
+                Grid.Row="2"
+                Width="100"
+                VerticalAlignment="Center"
+                FontSize="16" />
+            <TextBlock
+                Grid.Row="3"
+                Width="70"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Text="２年以上" />
+            <TextBlock
+                x:Name="secondstatus"
+                Grid.Row="3"
+                Width="100"
+                VerticalAlignment="Center"
+                FontSize="16" />
+            <TextBlock
+                Grid.Row="5"
+                Width="70"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Text="男子" />
+            <TextBlock
+                x:Name="malestatus"
+                Grid.Row="5"
+                Width="100"
+                VerticalAlignment="Center"
+                FontSize="16" />
+            <TextBlock
+                Grid.Row="6"
+                Width="70"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Text="女子" />
+            <TextBlock
+                x:Name="femalestatus"
+                Grid.Row="6"
+                Width="100"
+                VerticalAlignment="Center"
+                FontSize="16" />
+
+        </Grid>
+    </StackPanel>
+</ui:ContentDialog>

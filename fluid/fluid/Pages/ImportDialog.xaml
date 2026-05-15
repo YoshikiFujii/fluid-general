@@ -1,0 +1,137 @@
+﻿<ui:ContentDialog
+    x:Class="fluid_general.Pages.ImportDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:ModernWpf.Controls;assembly=ModernWpf"
+    xmlns:controls1="clr-namespace:ModernWpf.Controls;assembly=ModernWpf.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:fluid_general.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="インポート"
+    SecondaryButtonText="キャンセル"
+    mc:Ignorable="d">
+    <StackPanel>
+        <ProgressBar
+            Name="progressBar"
+            Height="20"
+            Maximum="100"
+            Minimum="0"
+            Visibility="Collapsed" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <Button
+                    Grid.Column="0"
+                    Width="150"
+                    Height="150"
+                    Margin="10"
+                    HorizontalAlignment="Center"
+                    Click="ImportEventClick">
+                    <Image Margin="20,0,20,0" Source="/img/ImportEvent.png" />
+                </Button>
+                <TextBlock
+                    Margin="3"
+                    HorizontalAlignment="Center"
+                    FontSize="25"
+                    Text="イベントファイル" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    HorizontalAlignment="Center"
+                    FontSize="13">
+                    <Run Text="イベントファイルをマージします" />
+                    <LineBreak />
+                    <Run Text="" />
+                </TextBlock>
+
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <Button
+                    Width="150"
+                    Height="150"
+                    Margin="10"
+                    HorizontalAlignment="Center"
+                    Click="ImportAbsentClick">
+                    <Image Margin="20,0,20,0" Source="/img/ImportAbsent.png" />
+                </Button>
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="25"
+                    Text="欠席登録" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    HorizontalAlignment="Center"
+                    FontSize="13">
+                    <Run Text="リスト内の生徒を一括で欠席" />
+                    <LineBreak />
+                    <Run Text="登録します。" />
+                    <LineBreak />
+                    <Run Text="エクセルファイルのA列に学籍" />
+                    <LineBreak />
+                    <Run Text="番号または部屋番号を並べ" />
+                    <LineBreak />
+                    <Run Text="てください" />
+                </TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <Button
+                    Width="150"
+                    Height="150"
+                    Margin="10"
+                    HorizontalAlignment="Center"
+                    Click="ImportAttendClick">
+                    <Image Margin="20,0,20,0" Source="/img/ImportAbsent.png" />
+                </Button>
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="25"
+                    Text="一括登録" />
+                <TextBlock
+                    Margin="0,5,0,0"
+                    HorizontalAlignment="Center"
+                    FontSize="13">
+                    <Run Text="リスト内の生徒を一括で出席" />
+                    <LineBreak />
+                    <Run Text="登録します。" />
+                    <LineBreak />
+                    <Run Text="エクセルファイルのA列に学籍" />
+                    <LineBreak />
+                    <Run Text="番号または部屋番号を並べ" />
+                    <LineBreak />
+                    <Run Text="てください" />
+                </TextBlock>
+            </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,50,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="90" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                Grid.Column="0"
+                HorizontalAlignment="Left"
+                FontSize="18"
+                Text="検索条件" />
+            <TextBlock
+                Grid.Column="1"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Text="イベントファイルのマージ及び欠席リストの登録に使用するデータを選択します。" />
+        </Grid>
+        <ComboBox
+            x:Name="SearchCondition"
+            Width="120"
+            Margin="0,10,0,0"
+            SelectedIndex="0">
+            <ComboBoxItem Content="部屋番号" />
+            <ComboBoxItem Content="学籍番号" />
+        </ComboBox>
+    </StackPanel>
+</ui:ContentDialog>

@@ -1,0 +1,24 @@
+﻿<Page
+    x:Class="fluid_general.Pages.aboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:fluid_general.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="AboutPage"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <StackPanel>
+        <TextBlock Text="Fluid (寮生管理用アプリケーション)" />
+        <Image
+            Width="100"
+            Margin="10"
+            HorizontalAlignment="Left"
+            Source="/img/large_logo.png" />
+        <TextBlock>
+            組織：寮友会執行役員会<LineBreak />
+            管理：情報工学科　藤井　義己</TextBlock>
+    </StackPanel>
+</Page>
