@@ -1,4 +1,4 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='utf-8'?>
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="fluid.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
@@ -21,6 +21,9 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="Reason" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ServerBaseUrl" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
   </Settings>

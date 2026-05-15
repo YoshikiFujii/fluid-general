@@ -1,4 +1,4 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -29,13 +29,13 @@ namespace fluid_general.Pages
     public partial class ExportPDFWindow : Window
     {
         private string CurrentEvent;
-        private string eventFilePath;
         private CancellationTokenSource cancellationTokenSource;
-        private RosterInfo rosterInfo;
-        public ExportPDFWindow(string EventFilePath, string currentEvent)
+        private Models.EventConfig _eventConfig;
+
+        public ExportPDFWindow(Models.EventConfig eventConfig)
         {
-            eventFilePath = EventFilePath;
-            CurrentEvent = currentEvent;
+            _eventConfig = eventConfig;
+            CurrentEvent = eventConfig.EventName;
 
             InitializeComponent();
             GetDefault();
@@ -72,7 +72,7 @@ namespace fluid_general.Pages
             try
             {
                 // PDF生成処理を非同期で実行
-                await Task.Run(() => GeneratePDF(progressWindow, cancellationTokenSource.Token));
+                await GeneratePDF(progressWindow, cancellationTokenSource.Token);
             }
             catch (OperationCanceledException)
             {
@@ -90,7 +90,7 @@ namespace fluid_general.Pages
             }
         }
 
-        private void GeneratePDF(ProgressWindow progressWindow, CancellationToken cancellationToken)
+        private async System.Threading.Tasks.Task GeneratePDF(ProgressWindow progressWindow, CancellationToken cancellationToken)
         {
             string wordFilePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "DemeritNoticeBase.docx");
 
@@ -146,11 +146,15 @@ namespace fluid_general.Pages
 
                         document.SaveToFile(tempFilePath, FileFormat.Docx);
                     }
-                    // XML ファイルを読み込み
-                    XDocument eventDoc = XDocument.Load(eventFilePath);
-                    var entries = eventDoc.Descendants("Entry").Where(x => x.Element("Status")?.Value == "未参加").ToList();
+                    // データベースから情報を取得
+                    var service = App.GetDataService();
+                    var members = await service.GetMembersByRosterAsync(_eventConfig.RosterName);
+                    var logs = await service.GetCheckInLogsAsync(_eventConfig.Id);
 
-                    if (entries.Count == 0)
+                    // 未参加のメンバーを特定
+                    var unparticipatedMembers = members.Where(m => !logs.Any(l => l.Member.StudentNumber == m.StudentNumber)).ToList();
+
+                    if (unparticipatedMembers.Count == 0)
                     {
                         MessageBox.Show("対象となるエントリが見つかりませんでした。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
                         return;
@@ -165,14 +169,15 @@ namespace fluid_general.Pages
                         List<string> pdfFiles = new List<string>();
 
                         // 各エントリに対して個別のPDFファイルを生成
-                        for (int i = 0; i<entries.Count; i++)
+                        for (int i = 0; i < unparticipatedMembers.Count; i++)
                         {
                             cancellationToken.ThrowIfCancellationRequested(); // キャンセル要求を確認
 
-                            var entry = entries[i];
-                            string name = entry.Element("Name")?.Value ?? "";
-                            string roomNumber = entry.Element("RoomNumber")?.Value ?? "";
+                            var member = unparticipatedMembers[i];
+                            string name = member.Name;
+                            string roomNumber = member.CustomFields.GetValueOrDefault("RoomNumber", "");
                             string tempPdfPath = Path.Combine(tempDir, $"temp_{i}.pdf");
+
 
                             using (Spire.Doc.Document document = new Spire.Doc.Document())
                             {
@@ -187,7 +192,7 @@ namespace fluid_general.Pages
                             pdfFiles.Add(tempPdfPath);
 
                             // プログレスバーを更新
-                            int progress = (int)((i + 1) / (double)entries.Count * 100);
+                            int progress = (int)((i + 1) / (double)unparticipatedMembers.Count * 100);
                             progressWindow.Dispatcher.Invoke(() => progressWindow.UpdateProgress(progress));
                         }
 

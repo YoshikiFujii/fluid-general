@@ -1,4 +1,4 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -15,43 +15,17 @@ namespace fluid_general.Pages
     /// </summary>
     public partial class ExportListWindow : Window
     {
+        private Models.EventConfig _eventConfig;
         private string CurrentEvent;
-        private string eventFilePath;
-        private string excelFilePath;
-        private RosterInfo rosterInfo;
-        public ExportListWindow(string EventFilePath, string currentEvent)
+
+        public ExportListWindow(Models.EventConfig eventConfig)
         {
-            eventFilePath = EventFilePath;
-            CurrentEvent = currentEvent;
+            _eventConfig = eventConfig;
+            CurrentEvent = eventConfig.EventName;
 
             InitializeComponent();
-            LoadRosterInfo();
         }
-        private void LoadRosterInfo()
-        {
-            try
-            {
-                // XMLファイルを読み込む
-                XDocument doc = XDocument.Load(eventFilePath);
 
-                // RosterInfo要素を取得
-                var rosterInfoElement = doc.Descendants("RosterInfo").FirstOrDefault();
-
-                if (rosterInfoElement != null)
-                {
-                    // FromXmlメソッドを使用してRosterInfoを作成
-                    rosterInfo = RosterInfo.FromXml(rosterInfoElement);
-                }
-                else
-                {
-                    MessageBox.Show("イベントファイルからRosterInfoを読み込めませんでした。", "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"RosterInfoの読み込み中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
         // ファイルが使用中かどうかを確認するヘルパーメソッド
         private bool IsFileInUse(string filePath)
         {
@@ -68,233 +42,127 @@ namespace fluid_general.Pages
             }
             return false;
         }
-        private List<Tuple<string, int, int>> GetDetail()
+
+        private async System.Threading.Tasks.Task<List<Tuple<string, int, int>>> GetDetailAsync()
         {
-            XDocument eventDoc = XDocument.Load(eventFilePath);
-            int totalParticipants = eventDoc.Descendants("Entry")
-                                     .Count(e => (string)e.Element("Status") == "参加済み" ||
-                                                 (string)e.Element("Status") == "未参加");
-            int firstTotalParticipants = eventDoc.Descendants("Entry").Count(e => (string)e.Element("Year") == "新");
-            int secondTotalParticipants = totalParticipants - firstTotalParticipants;
-            int maleTotalParticipants = eventDoc.Descendants("Entry").Count(e => (string)e.Element("Gender") == "男");
-            int femaleTotalParticipants = totalParticipants - maleTotalParticipants;
+            var service = App.GetDataService();
+            var members = await service.GetMembersByRosterAsync(_eventConfig.RosterName);
+            var logs = await service.GetCheckInLogsAsync(_eventConfig.Id);
 
-            int doneParticipants = eventDoc.Descendants("Entry").Count(e => (string)e.Element("Status") == "参加済み");
-            int firstParticipants = eventDoc.Descendants("Entry")
-                                     .Count(e => (string)e.Element("Status") == "参加済み" &&
-                                                 (string)e.Element("Year") == "新");
-            int secondParticipants = doneParticipants - firstParticipants;
-            int maleParticipants = eventDoc.Descendants("Entry").Count(e => (string)e.Element("Status") == "参加済み" &&
-                                                                            (string)e.Element("Gender") == "男");
-            int femaleParticipants = doneParticipants - maleParticipants;
+            int totalCount = members.Count;
+            int firstTotal = members.Count(m => m.CustomFields.GetValueOrDefault("Year") == "新");
+            int secondTotal = totalCount - firstTotal;
+            int maleTotal = members.Count(m => m.CustomFields.GetValueOrDefault("Gender") == "男");
+            int femaleTotal = totalCount - maleTotal;
 
-            // 結果をリストに格納して返す
+            int attendedCount = logs.Count(l => l.Status == "参加済み");
+            int firstAttended = members.Count(m => m.CustomFields.GetValueOrDefault("Year") == "新" && logs.Any(l => l.Member.StudentNumber == m.StudentNumber && l.Status == "参加済み"));
+            int secondAttended = attendedCount - firstAttended;
+            int maleAttended = members.Count(m => m.CustomFields.GetValueOrDefault("Gender") == "男" && logs.Any(l => l.Member.StudentNumber == m.StudentNumber && l.Status == "参加済み"));
+            int femaleAttended = attendedCount - maleAttended;
+
             return new List<Tuple<string, int, int>>
             {
-                Tuple.Create("合計人数", doneParticipants, totalParticipants),
-                Tuple.Create("１年出席人数", firstParticipants, firstTotalParticipants),
-                Tuple.Create("２年以上出席人数", secondParticipants, secondTotalParticipants),
-                Tuple.Create("男子出席人数", maleParticipants, maleTotalParticipants),
-                Tuple.Create("女子出席人数", femaleParticipants, femaleTotalParticipants)
+                Tuple.Create("合計人数", attendedCount, totalCount),
+                Tuple.Create("１年出席人数", firstAttended, firstTotal),
+                Tuple.Create("２年以上出席人数", secondAttended, secondTotal),
+                Tuple.Create("男子出席人数", maleAttended, maleTotal),
+                Tuple.Create("女子出席人数", femaleAttended, femaleTotal)
             };
         }
 
-        private void ExportExcelFile(object sender, RoutedEventArgs e)
+        private async void ExportExcelFile(object sender, RoutedEventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog
             {
                 Filter = "Excel Files (*.xlsx)|*.xlsx",
                 Title = "エクスポート先を選択してください",
-                FileName = $"{CurrentEvent}.xlsx" // デフォルトのファイル名
+                FileName = $"{CurrentEvent}.xlsx"
             };
 
             if (saveFileDialog.ShowDialog() == true)
             {
                 string excelFilePath = saveFileDialog.FileName;
+                var service = App.GetDataService();
+                var members = await service.GetMembersByRosterAsync(_eventConfig.RosterName);
+                var logs = await service.GetCheckInLogsAsync(_eventConfig.Id);
 
-                // XMLファイルを読み込む
-                DataSet dataSet = new DataSet();
-                dataSet.ReadXml(eventFilePath);
-
-                // チェックボックスの状態を取得
+                // フィルタリング
                 bool isChecked = CheckedCheckBox.IsChecked == true;
                 bool isUnchecked = UncheckedCheckBox.IsChecked == true;
                 bool isNotAttending = NotAttendingCheckBox.IsChecked == true;
 
-                // 列のチェックボックスの状態を取得
-                bool includeRoomNumber = roomNumCheckBox?.IsChecked == true;
-                bool includeGender = genderCheckBox?.IsChecked == true;
-                bool includeName = nameCheckBox?.IsChecked == true;
-                bool includeKanaName = kanaNameCheckBox?.IsChecked == true;
-                bool includeStudentNumber = studentNumCheckBox?.IsChecked == true;
-                bool includeDepartment = departCheckBox?.IsChecked == true;
-                bool includeCategory = yearCheckBox?.IsChecked == true;
-
-                //詳細情報チェックボックスの状態を取得
-                bool includeDetail = detailCheckBox?.IsChecked == true;
-
-                // 少なくとも1つの列が選択されていることを確認
-                if (rosterInfo == null)
+                var filteredMembers = members.Where(m =>
                 {
-                    MessageBox.Show("RosterInfo が正しく読み込まれていません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-                if (!includeRoomNumber && !includeGender && !includeName && !includeKanaName &&
-                    !includeStudentNumber && !includeDepartment && !includeCategory)
+                    var log = logs.FirstOrDefault(l => l.Member.StudentNumber == m.StudentNumber);
+                    string status = log?.Status ?? "未参加";
+                    return (isChecked && status == "参加済み") ||
+                           (isUnchecked && status == "未参加") ||
+                           (isNotAttending && status == "不参加");
+                }).ToList();
+
+                if (!filteredMembers.Any())
                 {
-                    MessageBox.Show("出力する生徒情報を少なくとも1つ選択してください。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("選択した条件に一致するデータがありません。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
-                // Excelファイルを作成する
                 using (var workbook = new XLWorkbook())
                 {
+                    var worksheet = workbook.Worksheets.Add(CurrentEvent);
+                    int col = 1;
 
-                    // Roster.Entryのデータを取得
-                    DataTable rosterTable = dataSet.Tables["Entry"];
+                    // ヘッダー
+                    if (roomNumCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "部屋番号";
+                    if (genderCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "性別";
+                    if (nameCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "名前";
+                    if (kanaNameCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "名前(カナ)";
+                    if (studentNumCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "学生番号";
+                    if (departCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "学科";
+                    if (yearCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "区分";
+                    worksheet.Cell(1, col++).Value = "参加状況";
 
-                    if (rosterTable != null && rosterTable.Rows.Count > 0)
+                    // データ
+                    int row = 2;
+                    foreach (var m in filteredMembers)
                     {
+                        col = 1;
+                        var log = logs.FirstOrDefault(l => l.Member.StudentNumber == m.StudentNumber);
+                        string status = log?.Status ?? "未参加";
 
-                        // 1行目をタイトル行として設定
-                        DataRow titleRow = rosterTable.Rows[0];
-                        for (int col = 0; col < rosterTable.Columns.Count; col++)
+                        if (roomNumCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("RoomNumber");
+                        if (genderCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("Gender");
+                        if (nameCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.Name;
+                        if (kanaNameCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.Kana;
+                        if (studentNumCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.StudentNumber;
+                        if (departCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("Department");
+                        if (yearCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("Year");
+                        worksheet.Cell(row, col++).Value = status;
+                        row++;
+                    }
+
+                    if (detailCheckBox.IsChecked == true)
+                    {
+                        var details = await GetDetailAsync();
+                        var worksheet2 = workbook.Worksheets.Add("詳細情報");
+                        worksheet2.Cell(1, 2).Value = "出席人数";
+                        worksheet2.Cell(1, 3).Value = "総数";
+
+                        int dRow = 2;
+                        foreach (var d in details)
                         {
-                            rosterTable.Columns[col].ColumnName = titleRow[col]?.ToString();
-                        }
-
-
-                        // チェックボックスの状態に基づいてデータをフィルタリング
-                        var filteredRows = rosterTable.AsEnumerable().Where(row =>
-                        {
-                            string status = row["参加状況"]?.ToString();
-                            return (isChecked && status == "参加済み") ||
-                                    (isUnchecked && status == "未参加") ||
-                                    (isNotAttending && status == "不参加");
-                        });
-
-                        if (!filteredRows.Any())
-                        {
-                            MessageBox.Show("選択した条件に一致するデータがありません。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
-                            return;
-                        }
-
-                        // フィルタリングされたデータを新しい DataTable にコピー
-                        DataTable filteredTable = filteredRows.CopyToDataTable();
-
-                        // 選択する列のインデックスを格納するリスト
-                        var selectedColumnIndices = new List<int>();
-
-
-                        // 列インデックスをリストに追加する関数
-                        void AddColumnIndex(int? columnIndex, bool include)
-                        {
-                            if (include && columnIndex.HasValue && columnIndex.Value > 0 && columnIndex.Value <= rosterTable.Columns.Count)
-                            {
-                                selectedColumnIndices.Add(columnIndex.Value - 1); // 0ベースのインデックスに変換
-                            }
-                        }
-
-                        // チェックボックスの状態に応じて列インデックスを追加
-                        AddColumnIndex(rosterInfo.RoomNumberCol, includeRoomNumber);
-                        AddColumnIndex(rosterInfo.GenderCol, includeGender);
-                        AddColumnIndex(rosterInfo.NameCol, includeName);
-                        AddColumnIndex(rosterInfo.KanaCol, includeKanaName);
-                        AddColumnIndex(rosterInfo.StudentNumberCol, includeStudentNumber);
-                        AddColumnIndex(rosterInfo.DepartCol, includeDepartment);
-                        AddColumnIndex(rosterInfo.YearCol, includeCategory);
-
-                        // Status列のインデックスを見つける（"参加状況"列）
-                        int statusColumnIndex = -1;
-                        for (int i = 0; i < rosterTable.Columns.Count; i++)
-                        {
-                            if (rosterTable.Columns[i].ColumnName == "参加状況")
-                            {
-                                statusColumnIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (statusColumnIndex >= 0)
-                        {
-                            selectedColumnIndices.Add(statusColumnIndex);
-                        }
-
-                        // 選択されたインデックスを昇順にソート
-                        selectedColumnIndices.Sort();
-
-                        // 選択された列名のリストを作成
-                        var selectedColumns = new List<string>();
-
-                        foreach (int index in selectedColumnIndices)
-                        {
-                            if (index < rosterTable.Columns.Count)
-                            {
-                                // 列名をリストに追加
-                                selectedColumns.Add(rosterTable.Columns[index].ColumnName);
-
-                                // フィルタリングされたデータを確認
-                                if (!filteredRows.Any())
-                                {
-                                    MessageBox.Show("選択した条件に一致するデータがありません。", "情報", MessageBoxButton.OK, MessageBoxImage.Information);
-                                    return;
-                                }
-
-                                // 選択された列名を確認
-                                if (selectedColumns.Count == 0)
-                                {
-                                    MessageBox.Show("エクスポートする列が選択されていません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-                                    return;
-                                }
-                            }
-                        }
-
-                        // selectedColumnsが空でないことを確認
-                        if (selectedColumns.Count == 0)
-                        {
-                            MessageBox.Show("エクスポートする列が選択されていません。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-
-                            return;
-                        }
-
-
-                        // 選択された列のみを含むテーブルを作成
-                        DataTable finalTable = filteredTable.DefaultView.ToTable(false, selectedColumns.ToArray());
-
-                        // Rosterシートを作成
-                        var worksheet = workbook.Worksheets.Add(CurrentEvent);
-
-                        // DataTableをExcelのテーブル形式で挿入
-                        worksheet.Cell(1, 1).InsertTable(finalTable);
-
-                        if(includeDetail)
-                        {
-                            var details = GetDetail();
-
-                            var worksheet2 = workbook.Worksheets.Add("詳細情報");
-                            worksheet2.Cell(1, 2).Value = "出席人数";
-                            worksheet2.Cell(1, 3).Value = "総数";
-
-                            int row = 2;
-                            foreach(var detail in details)
-                            {
-                                worksheet2.Cell(row, 1).Value = detail.Item1; // タイトル
-                                worksheet2.Cell(row, 2).Value = detail.Item2; // 出席人数
-                                worksheet2.Cell(row, 3).Value = detail.Item3; // 総人数
-                                row++;
-                            }
+                            worksheet2.Cell(dRow, 1).Value = d.Item1;
+                            worksheet2.Cell(dRow, 2).Value = d.Item2;
+                            worksheet2.Cell(dRow, 3).Value = d.Item3;
+                            dRow++;
                         }
                     }
 
-                    // Excelファイルを保存する
                     workbook.SaveAs(excelFilePath);
                 }
 
                 MessageBox.Show("エクスポートが完了しました。", "成功", MessageBoxButton.OK, MessageBoxImage.Information);
-
             }
         }
-
-
     }
 }

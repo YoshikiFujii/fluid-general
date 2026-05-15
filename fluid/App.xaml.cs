@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using ModernWpf;
 using System;
 using System.IO;
@@ -9,6 +9,15 @@ using ClosedXML.Graphics;
 using System.Reflection;
 using SixLabors.Fonts;
 using System.Globalization;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
+using System.Net.Http;
+using System.Threading.Tasks;
+using fluid_general.Data;
 
 namespace fluid_general
 {
@@ -17,17 +26,101 @@ namespace fluid_general
     /// </summary>
     public partial class App : Application
     {
+        private IHost? _host;
+        
+        // 子機モード（他PCのセッションに接続）として動作する場合のベースURL
+        public static string? ServerBaseUrl 
+        { 
+            get => fluid_general.Properties.Settings.Default.ServerBaseUrl;
+            set 
+            {
+                fluid_general.Properties.Settings.Default.ServerBaseUrl = value;
+                fluid_general.Properties.Settings.Default.Save();
+            }
+        }
+
+        public static Services.IDataService GetDataService()
+        {
+            if (string.IsNullOrEmpty(ServerBaseUrl))
+            {
+                return new Services.LocalDataService();
+            }
+            else
+            {
+                return new Services.RemoteDataService();
+            }
+        }
+
         public App()
         {
             // 未処理の例外を捕捉するイベントを登録
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+
+            // Web API サーバーの構成
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.Configure(app =>
+                    {
+                        app.UseRouting();
+                        app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+                    });
+                    webBuilder.ConfigureServices(services =>
+                    {
+                        services.AddControllers();
+                        services.AddDbContext<AppDbContext>();
+                    });
+                    // ポート5000で待ち受け（必要に応じて設定から読み込む形に変更可）
+                    webBuilder.UseUrls("http://0.0.0.0:5000"); 
+                })
+                .Build();
         }
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             base.OnStartup(e);
+
+            if (_host != null)
+            {
+                await _host.StartAsync();
+
+                // データベースの初期化
+                using (var scope = _host.Services.CreateScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    db.Database.EnsureCreated();
+
+                    // RosterName カラムが不足している場合の簡易マイグレーション
+                    try
+                    {
+                        var conn = db.Database.GetDbConnection();
+                        if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+                        using (var cmd = conn.CreateCommand())
+                        {
+                            cmd.CommandText = "PRAGMA table_info(Members);";
+                            bool exists = false;
+                            using (var reader = await cmd.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    if (reader["name"].ToString() == "RosterName") { exists = true; break; }
+                                }
+                            }
+                            if (!exists)
+                            {
+                                cmd.CommandText = "ALTER TABLE Members ADD COLUMN RosterName TEXT DEFAULT '';";
+                                await cmd.ExecuteNonQueryAsync();
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError(ex); // 失敗しても起動を優先
+                    }
+                }
+            }
 
             try
             {
@@ -46,6 +139,18 @@ namespace fluid_general
                 File.WriteAllText("font_error.log", ex.ToString());
                 MessageBox.Show("Notoフォントの読み込みに失敗しました");
             }
+
+            // リモート接続の検証 (子機モードの場合)
+            if (!string.IsNullOrEmpty(ServerBaseUrl))
+            {
+                _ = VerifyRemoteConnectionAsync();
+            }
+            else
+            {
+                // 親機モードとしてログに出力
+                Console.WriteLine("Mode: Master (Local)");
+            }
+
             ApplyTheme();
             // システムのテーマ変更イベントを登録
             SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
@@ -56,6 +161,16 @@ namespace fluid_general
         private void OnThemeChanged(ThemeManager sender, object args)
         {
             ApplyTheme(); // ModernWPFテーマが変更された場合
+        }
+
+        protected override async void OnExit(ExitEventArgs e)
+        {
+            if (_host != null)
+            {
+                await _host.StopAsync(TimeSpan.FromSeconds(5));
+                _host.Dispose();
+            }
+            base.OnExit(e);
         }
 
 
@@ -132,6 +247,31 @@ namespace fluid_general
             {
                 // ログ書き込み中にエラーが発生した場合、標準出力にエラーメッセージを出力
                 Console.WriteLine("エラーログの書き込みに失敗しました: " + loggingEx.Message);
+            }
+        }
+
+        public static async Task VerifyRemoteConnectionAsync()
+        {
+            if (string.IsNullOrEmpty(ServerBaseUrl)) return;
+
+            try
+            {
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(3);
+                var response = await client.GetAsync($"{ServerBaseUrl}api/members");
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Mode: Sub-machine (Remote) - Connected to {ServerBaseUrl}");
+                }
+                else
+                {
+                    Console.WriteLine($"Mode: Sub-machine (Remote) - Connection Failed to {ServerBaseUrl} (Status: {response.StatusCode})");
+                    // 必要に応じてユーザーに通知
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Mode: Sub-machine (Remote) - Connection Error to {ServerBaseUrl}: {ex.Message}");
             }
         }
     }

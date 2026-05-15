@@ -1,4 +1,4 @@
-﻿<Page
+<Page
     x:Class="fluid_general.Pages.RosterPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -58,9 +58,9 @@
                 Margin="150,10,10,10"
                 VerticalAlignment="Center"
                 FontSize="14">
-                <Run Text="⚠️名簿はxml形式で保存されます。xlsx形式のファイルは" />
+                <Run Text="⚠️名簿はデータベースに保存されます。" />
                 <LineBreak />
-                <Run Text="インポート時に自動でxml形式に変換されます。" />
+                <Run Text="既存のExcelファイルから名簿をインポートできます。" />
             </TextBlock>
 
             <DataGrid
@@ -76,8 +76,8 @@
                     <!--  File Name Column  -->
                     <DataGridTextColumn
                         Width="*"
-                        Binding="{Binding FileName}"
-                        Header="ファイル名" />
+                        Binding="{Binding RosterName}"
+                        Header="名簿名" />
                     <DataGridTextColumn Binding="{Binding TotalCount}" Header="人数" />
                 </DataGrid.Columns>
                 <DataGrid.ContextMenu>

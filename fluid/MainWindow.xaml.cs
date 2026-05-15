@@ -1,4 +1,4 @@
-﻿using ModernWpf.Controls;
+using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,9 @@ namespace fluid_general
         Roster,
         Library,
         About,
-        Settings
+        Settings,
+        ConnectSession,
+        DataMigration
     }
 
     public partial class MainWindow : Window
@@ -32,7 +34,20 @@ namespace fluid_general
         public MainWindow()
         {
             InitializeComponent();
+            UpdateTitle();
             ContentFrame.Navigate(new Pages.EventPage());
+        }
+
+        private void UpdateTitle()
+        {
+            if (string.IsNullOrEmpty(App.ServerBaseUrl))
+            {
+                this.Title = "Fluid General - 親機モード";
+            }
+            else
+            {
+                this.Title = $"Fluid General - 子機モード (接続先: {App.ServerBaseUrl})";
+            }
         }
 
         private void NaviView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -54,6 +69,12 @@ namespace fluid_general
                         break;
                     case NaviIcon.About:
                         ContentFrame.Navigate(new Pages.aboutPage());
+                        break;
+                    case NaviIcon.ConnectSession:
+                        ContentFrame.Navigate(new Pages.ConnectSessionPage());
+                        break;
+                    case NaviIcon.DataMigration:
+                        ContentFrame.Navigate(new Pages.DataMigrationPage());
                         break;
                     default:
                         break;

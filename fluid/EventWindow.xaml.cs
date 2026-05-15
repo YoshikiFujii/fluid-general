@@ -1,4 +1,4 @@
-﻿using fluid_general.Pages;
+using fluid_general.Pages;
 using Microsoft.VisualBasic; // StrConv を使用するため
 using ModernWpf.Controls;
 using System;
@@ -69,7 +69,7 @@ namespace fluid_general
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -86,7 +86,6 @@ namespace fluid_general
         private SettingItem Settings { get; set; } = new SettingItem();
         private string LogFolderPath = System.IO.Path.Combine(App.AppDataPath, "log");
         private string currentEvent;
-        private string eventFilePath;
 
         private int serialDataBits = 8; // デフォルト8ビット。必要に応じて変更可
         private string serialDelimiter = "\n"; // 区切り文字
@@ -117,7 +116,9 @@ namespace fluid_general
         private SoundPlayer Sound4 = null;
         private SoundPlayer Sound5 = null;
 
-        public EventWindow(Event selectedEvent)
+        private fluid_general.Models.EventConfig _currentEventConfig;
+
+        public EventWindow(fluid_general.Models.EventConfig selectedEvent)
         {
             InitializeComponent();
 
@@ -127,13 +128,13 @@ namespace fluid_general
             // ウィンドウタイトルに設定
             this.Title = $"fluid-general - {version} - EventWindow";
 
+            _currentEventConfig = selectedEvent;
             currentEvent = selectedEvent.EventName;
-            eventFilePath = System.IO.Path.Combine(App.AppDataPath, "data", $"{currentEvent}.xml");
             EventHeader.Text = currentEvent;
             EventInfoHeader.Text = selectedEvent.EventDate.ToString();
             DataContext = this;
 
-            LoadEvent();
+            this.Loaded += async (s, e) => await LoadEventAsync();
             LoadGifAsync();
             if (!System.IO.Directory.Exists(LogFolderPath))
             {
@@ -509,7 +510,6 @@ namespace fluid_general
                 Console.WriteLine($"音声の再生に失敗しました: {ex.Message}");
             }
         }
-        //##########################################################################################
 
 
         public async Task ReceiveDataContinuously(SerialPort serialPort)
@@ -665,50 +665,41 @@ namespace fluid_general
             }
         }
 
-        private void LoadEvent()
+        private async Task LoadEventAsync()
         {
-
-            if (!File.Exists(eventFilePath))
+            try
             {
-                MessageBox.Show($"イベントファイルが見つかりません: {eventFilePath}");
-                return;
+                var service = App.GetDataService();
+                var ev = await service.GetEventAsync(_currentEventConfig.Id);
+                if (ev == null)
+                {
+                    MessageBox.Show($"イベントが見つかりません。 (ID: {_currentEventConfig.Id})");
+                    return;
+                }
+
+                Settings.SoundSetting = ev.TouchSound;
+                Settings.SameStudentErrorSoundSetting = ev.SameStudentSetting;
+
+                await RefreshRosterListAsync();
+                UpdateProgressBar();
+                
+                RosterListView.Visibility = Visibility.Visible;
             }
-            // XMLを解析し、RosterItemsにデータを追加
-            XDocument eventDoc = XDocument.Load(eventFilePath);
-            Settings.SoundSetting = eventDoc.Root.Element("TouchSound").Value;
-            // "SameStudentSetting" が存在する場合はその値を使い、存在しない場合は true を設定する
-            string sameStudentSettingValue = eventDoc.Root.Element("SameStudentSetting")?.Value;
-            Settings.SameStudentErrorSoundSetting = bool.TryParse(sameStudentSettingValue, out bool result) ? result : true;
-            UpdateProgressBar();
+            catch (Exception ex)
+            {
+                MessageBox.Show($"イベントの読み込み中にエラーが発生しました:\n{ex.Message}");
+                App.LogError(ex);
+            }
+        }
 
-            // RosterItems の更新
-            RefreshRosterList(eventDoc);
-            RosterListView.Visibility = Visibility.Visible;
-        }
-        public void UpdateProgressbarButtonCllick(object sender, RoutedEventArgs e)
-        {
-            UpdateProgressBar();
-        }
-        public async void StatusButtonClick(object sender, RoutedEventArgs e)
-        {
-            var dialog = new StatusDialog(eventFilePath);
-             var result = await dialog.ShowAsync();
-
-        }
         public void UpdateProgressBar()
         {
-            XDocument eventDoc = XDocument.Load(eventFilePath);
-            //ProgressBarの初期化--------------------------------------------------------------
-            TotalParticipants = eventDoc.Descendants("Entry")
-                                     .Count(e => (string)e.Element("Status") == "参加済み" |
-                                                 (string)e.Element("Status") == "未参加");
-            FirstTotalParticipants = eventDoc.Descendants("Entry").Count(e => (string)e.Element("Year") == "新");
+            TotalParticipants = RosterItems.Count;
+            FirstTotalParticipants = RosterItems.Count(r => r.Year == "新");
             SecondTotalParticipants = TotalParticipants - FirstTotalParticipants;
 
-            DoneParticipants = eventDoc.Descendants("Entry").Count(e => (string)e.Element("Status") == "参加済み");
-            FirstParticipants = eventDoc.Descendants("Entry")
-                                     .Count(e => (string)e.Element("Status") == "参加済み" &&
-                                                 (string)e.Element("Year") == "新");
+            DoneParticipants = RosterItems.Count(r => r.IsRegistered);
+            FirstParticipants = RosterItems.Count(r => r.IsRegistered && r.Year == "新");
             SecondParticipants = DoneParticipants - FirstParticipants;
 
             WholeProgressBar.Minimum = 0;
@@ -720,46 +711,35 @@ namespace fluid_general
             SecondProgressBar.Minimum = 0;
             SecondProgressBar.Maximum = SecondTotalParticipants;
             SecondProgressBar.Value = SecondParticipants;
-            //----------------------------------------------------------------------------------
-            
         }
-        public void OpenEventFolder(object sender, RoutedEventArgs e)
-        {
-            try
-            {
 
-                // フォルダが存在するか確認
-                string dataFolderPath = System.IO.Path.Combine(App.AppDataPath, "data");
-                if (Directory.Exists(dataFolderPath))
-                {
-                    // エクスプローラーでログフォルダを開く
-                    System.Diagnostics.Process.Start("explorer.exe", dataFolderPath);
-                }
-                else
-                {
-                    // フォルダが存在しない場合はエラーメッセージを表示
-                    MessageBox.Show($"データフォルダが存在しません: {dataFolderPath}", "エラー", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                // 例外が発生した場合、エラーメッセージを表示
-                MessageBox.Show($"ログフォルダを開く際にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+        public void UpdateProgressbarButtonCllick(object sender, RoutedEventArgs e)
+        {
+            UpdateProgressBar();
         }
+
+        public async void StatusButtonClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new StatusDialog(_currentEventConfig.Id.ToString()); 
+            var result = await dialog.ShowAsync();
+        }
+
         public async void aboutButtonClick(object sender, RoutedEventArgs e)
         {
             var dialog = new aboutDialog();
             var result = await dialog.ShowAsync();
         }
+
         public async void SettingsButtonClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new EventSettingsDialog(eventFilePath, Settings);
+            var dialog = new EventSettingsDialog(null, Settings);
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
+            {
                 Settings.SoundSetting = dialog.SelectedSoundSetting;
-            Settings.SameStudentErrorSoundSetting = dialog.SameStudentErrorEnabled;
-            SaveSettings(Settings);
+                Settings.SameStudentErrorSoundSetting = dialog.SameStudentErrorEnabled;
+                SaveSettings(Settings);
+            }
         }
         public void WriteLog(string status, RosterItem rosterItem)
         {
@@ -847,54 +827,34 @@ namespace fluid_general
         }
         // 選択された状態を保存する
         //設定をイベントファイルに保存する
-        private void SaveSettings(SettingItem settings)
+        private async void SaveSettings(SettingItem settings)
         {
-            XDocument eventDoc;
-
-            if (File.Exists(eventFilePath))
+            var service = App.GetDataService();
+            var ev = await service.GetEventAsync(_currentEventConfig.Id);
+            if (ev != null)
             {
-                eventDoc = XDocument.Load(eventFilePath);
+                ev.TouchSound = settings.SoundSetting;
+                ev.SameStudentSetting = settings.SameStudentErrorSoundSetting;
+                await service.UpdateEventAsync(ev);
             }
-            else
-            {
-                MessageBox.Show("イベントファイルが存在しません。");
-                return;
-            }
-
-            eventDoc.Root.Element("TouchSound").Value = settings.SoundSetting;
-            eventDoc.Root.Element("SameStudentSetting").Value = settings.SameStudentErrorSoundSetting ? "true" : "false";
-            eventDoc.Save(eventFilePath);
         }
-        private void SaveStatus(RosterItem rosterItem)
+        
+        private async void SaveStatus(RosterItem rosterItem)
         {
-            XDocument eventDoc;
+            try
+            {
+                var service = App.GetDataService();
+                string status = "未参加";
+                if (rosterItem.IsRegistered) status = "参加済み";
+                else if (rosterItem.IsAbsent) status = "不参加";
 
-            if (File.Exists(eventFilePath))
-            {
-                eventDoc = XDocument.Load(eventFilePath);
+                await service.UpdateCheckInStatusAsync(rosterItem.StudentNumber, _currentEventConfig.Id, status);
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("イベントファイルが存在しません。");
-                return;
+                App.LogError(ex);
+                MessageBox.Show($"ステータスの保存に失敗しました: {ex.Message}");
             }
-
-            var entryElement = eventDoc.Descendants("Entry")
-        .FirstOrDefault(x => x.Element("RoomNumber")?.Value == rosterItem.RoomNumber);
-
-            if (entryElement != null)
-            {
-                // Statusを更新
-                entryElement.Element("Status").Value = rosterItem.IsRegistered ? "参加済み" :
-                                                       rosterItem.IsNotRegistered ? "未参加" : "不参加";
-            }
-            else
-            {
-                MessageBox.Show($"部屋番号 {rosterItem.RoomNumber} の参加者が見つかりません。");
-                return;
-            }
-            // イベントファイルに保存
-            eventDoc.Save(eventFilePath);
         }
         // テキストボックスでの入力に基づいてリストをフィルタリング
         private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -1144,54 +1104,59 @@ namespace fluid_general
         {
             var dialog = new ImportDialog(currentEvent);
             var result = await dialog.ShowAsync();
-            LoadEvent();
+            await LoadEventAsync();
         }
         private async void ExportButtonClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new ExportDialog(currentEvent);
+            var dialog = new ExportDialog(_currentEventConfig);
             var result = await dialog.ShowAsync();
         }
-        public void RefreshRosterList(XDocument eventDoc)
+        public async Task RefreshRosterListAsync()
         {
             try
             {
+                var service = App.GetDataService();
+                var members = await service.GetMembersByRosterAsync(_currentEventConfig.RosterName);
+                var logs = await service.GetCheckInLogsAsync(_currentEventConfig.Id);
+
                 RosterItems.Clear();
-                foreach (var entryElement in eventDoc.Descendants("Entry").Skip(1))
+                if (members.Count == 0)
                 {
-                    RosterItems.Add(CreateRosterItem(entryElement));
+                    LogList.AppendText($"[{DateTime.Now:HH:mm:ss}] [警告] 名簿 '{_currentEventConfig.RosterName}' にメンバーが登録されていません。\n");
+                }
+
+                foreach (var member in members)
+                {
+                    var log = logs.FirstOrDefault(l => l.MemberId == member.Id);
+                    string status = log?.Status ?? "未参加";
+
+                    RosterItems.Add(new RosterItem
+                    {
+                        RoomNumber = member.CustomFields.ContainsKey("RoomNumber") ? member.CustomFields["RoomNumber"] : "",
+                        Name = member.Name,
+                        Kana = member.Kana,
+                        StudentNumber = member.StudentNumber,
+                        Gender = member.CustomFields.ContainsKey("Gender") ? member.CustomFields["Gender"] : "",
+                        Department = member.CustomFields.ContainsKey("Department") ? member.CustomFields["Department"] : "",
+                        Year = member.CustomFields.ContainsKey("Year") ? member.CustomFields["Year"] : "",
+                        IsRegistered = status == "参加済み",
+                        IsNotRegistered = status == "未参加",
+                        IsAbsent = status == "不参加"
+                    });
                 }
                 RosterListView.ItemsSource = null;
                 RosterListView.ItemsSource = RosterItems;
+                
+                // 検索などのために ListView を表示
+                if (RosterItems.Count > 0)
+                {
+                    RosterListView.Visibility = Visibility.Visible;
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"リストの更新中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-        private RosterItem CreateRosterItem(XElement entryElement)
-        {
-            string roomNumber = entryElement.Element("RoomNumber")?.Value ?? "部屋番号情報なし";
-            string studentNumber = entryElement.Element("StudentNumber")?.Value ?? "学籍番号情報なし";
-            string name = entryElement.Element("Name")?.Value ?? "名前情報なし";
-            string gender = entryElement.Element("Gender")?.Value ?? "性別情報なし";
-            string kana = entryElement.Element("Kana")?.Value ?? "よみがな情報なし";
-            string depart = entryElement.Element("Department")?.Value ?? "学科情報なし";
-            string year = entryElement.Element("Year")?.Value ?? "学年情報なし";
-            string status = entryElement.Element("Status")?.Value ?? "未参加";
-
-            return new RosterItem
-            {
-                RoomNumber = roomNumber,
-                Name = name,
-                Kana = kana,
-                StudentNumber = studentNumber,
-                Gender = gender,
-                Department = depart,
-                Year = year,
-                IsRegistered = status == "参加済み",
-                IsNotRegistered = status == "未参加",
-                IsAbsent = status == "不参加"
-            };
         }
 
     }

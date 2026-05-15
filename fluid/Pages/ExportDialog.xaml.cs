@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace fluid_general.Pages
 {
@@ -7,22 +7,21 @@ namespace fluid_general.Pages
     /// </summary>
     public partial class ExportDialog : ModernWpf.Controls.ContentDialog
     {
-        private string CurrentEvent;
-        private string eventFilePath;
-        public ExportDialog(string currentEvent)
+        private Models.EventConfig _eventConfig;
+
+        public ExportDialog(Models.EventConfig eventConfig)
         {
-            CurrentEvent = currentEvent;
-            eventFilePath = System.IO.Path.Combine(fluid_general.App.AppDataPath, "data", $"{currentEvent}.xml");
+            _eventConfig = eventConfig;
             InitializeComponent();
         }
         private void OutputListClick(object sender, RoutedEventArgs e)
         {
-            ExportListWindow exportListWindow = new ExportListWindow(eventFilePath, CurrentEvent);
+            ExportListWindow exportListWindow = new ExportListWindow(_eventConfig);
             exportListWindow.Show();
         }
         private void OutputPDFClick(object sender, RoutedEventArgs e)
         {
-            ExportPDFWindow exportPDFWindow = new ExportPDFWindow(eventFilePath, CurrentEvent);
+            ExportPDFWindow exportPDFWindow = new ExportPDFWindow(_eventConfig);
             exportPDFWindow.Show();
         }
     }

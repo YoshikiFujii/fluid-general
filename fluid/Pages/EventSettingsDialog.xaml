@@ -4,8 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:ModernWpf.Controls;assembly=ModernWpf"
     xmlns:controls1="clr-namespace:ModernWpf.Controls;assembly=ModernWpf.Controls"
-    xmlns:controls2="clr-namespace:Windows.UI.Xaml.Controls;assembly=Windows"
-    xmlns:controls3="clr-namespace:Windows.UI.Xaml.Controls;assembly=Windows.Foundation.UniversalApiContract"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:fluid_general.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"

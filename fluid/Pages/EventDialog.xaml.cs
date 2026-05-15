@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -13,55 +13,52 @@ namespace fluid_general.Pages
         public DateTime EventDate { get; private set; }
         public string Roster { get; private set; }
 
-        private string dataFolder = System.IO.Path.Combine(fluid_general.App.AppDataPath, "data");
-        public string rosterFolderPath = System.IO.Path.Combine(fluid_general.App.AppDataPath, "roster");
-        private ObservableCollection<Event> events;
-
         public EventDialog()
         {
             InitializeComponent();
+            _ = LoadRostersAsync();
+        }
 
+        private async System.Threading.Tasks.Task LoadRostersAsync()
+        {
             try
             {
+                var service = App.GetDataService();
+                var members = await service.GetMembersAsync();
+                var rosters = members
+                    .Where(m => !string.IsNullOrEmpty(m.RosterName))
+                    .Select(m => m.RosterName)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
 
-                if (Directory.Exists(rosterFolderPath))
+                foreach (var roster in rosters)
                 {
-                    List<string> rosterFiles = Directory.GetFiles(rosterFolderPath, "*.xml")
-                                   .Select(System.IO.Path.GetFileNameWithoutExtension)
-                                   .ToList();
-
-                    foreach (var roster in rosterFiles)
-                    {
-                        RosterComboBox.Items.Add(roster);
-                    }
+                    RosterComboBox.Items.Add(roster);
                 }
-                else
+                
+                if (rosters.Count == 0)
                 {
-                    MessageBox.Show("Debug:rosterフォルダ内に名簿が存在しません。");
+                    MessageBox.Show("利用可能な名簿がありません。先に名簿をインポートしてください。");
                 }
             }
             catch (Exception ex)
             {
-
-                MessageBox.Show("Error loading roster files: " + ex.Message);
+                MessageBox.Show("名簿の読み込みに失敗しました: " + ex.Message);
             }
-
         }
 
-        private void ContentDialog_PrimaryButtonClick(ModernWpf.Controls.ContentDialog sender, ModernWpf.Controls.ContentDialogButtonClickEventArgs args)
+        private async void ContentDialog_PrimaryButtonClick(ModernWpf.Controls.ContentDialog sender, ModernWpf.Controls.ContentDialogButtonClickEventArgs args)
         {
-
             // バリデーション: イベント名と開催日が入力されているか確認
             if (string.IsNullOrWhiteSpace(EventNameTextBox.Text) || !EventDatePicker.SelectedDate.HasValue)
             {
-                // 入力が不完全な場合はアラートを表示
                 MessageBox.Show("すべてのフィールドに記入してください。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
-
-                // イベントをキャンセルしてダイアログを閉じないようにする
                 args.Cancel = true;
                 return;
             }
-            char[]invalidChars = Path.GetInvalidFileNameChars();
+
+            char[] invalidChars = Path.GetInvalidFileNameChars();
             if (EventNameTextBox.Text.Any(c => invalidChars.Contains(c)))
             {
                 MessageBox.Show($"イベント名に使用できない文字が含まれています。\n禁止文字: {string.Join(" ", invalidChars)}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -69,20 +66,30 @@ namespace fluid_general.Pages
                 return;
             }
 
-            if (Directory.GetFiles(dataFolder, "*.xml").Any(file => System.IO.Path.GetFileNameWithoutExtension(file) == EventNameTextBox.Text))
+            // 既存イベント名のチェック
+            try
             {
-                MessageBox.Show("同じ名前のファイルが存在します。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                var service = App.GetDataService();
+                var events = await service.GetEventsAsync();
+                if (events.Any(ev => ev.EventName == EventNameTextBox.Text))
+                {
+                    MessageBox.Show("同じ名前のイベントが既に存在します。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    args.Cancel = true;
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                // エラー時は警告を出して続行を止めるか、ログに吐く
+                MessageBox.Show($"イベント名の確認中にエラーが発生しました: {ex.Message}");
                 args.Cancel = true;
                 return;
             }
+
             // 入力されたイベント名と開催日を取得
             EventName = EventNameTextBox.Text;
             EventDate = EventDatePicker.SelectedDate.Value.Date;
             Roster = RosterComboBox.Text;
-
         }
     }
-
-
-
 }

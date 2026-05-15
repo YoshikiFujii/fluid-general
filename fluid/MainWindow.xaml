@@ -1,4 +1,4 @@
-﻿<Window
+<Window
     x:Class="fluid_general.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -27,25 +27,32 @@
         SelectionChanged="NaviView_SelectionChanged">
         <ui:NavigationView.MenuItems>
             <ui:NavigationViewItem
-                Content="繧､繝吶Φ繝・
+                Content="イベント"
                 Icon="Home"
                 IsSelected="True"
                 Tag="{x:Static local:NaviIcon.Event}" />
             <ui:NavigationViewItem
-                Content="蟇ｮ逕溷錐邁ｿ"
+                Content="名簿"
                 Icon="Contact"
                 IsSelected="True"
                 Tag="{x:Static local:NaviIcon.Roster}" />
             <ui:NavigationViewItem
-                Content="菴ｿ縺・婿"
+                Content="使い方"
                 Icon="Library"
                 IsSelected="True"
                 Tag="{x:Static local:NaviIcon.Library}" />
-
+            <ui:NavigationViewItem
+                Content="セッションに接続"
+                Icon="Link"
+                IsSelected="False"
+                Tag="{x:Static local:NaviIcon.ConnectSession}" />
         </ui:NavigationView.MenuItems>
         <ui:NavigationView.FooterMenuItems>
             <ui:NavigationViewItem Content="Setings" Icon="Setting" />
-
+            <ui:NavigationViewItem
+                Content="データ移行"
+                Icon="Repair"
+                Tag="{x:Static local:NaviIcon.DataMigration}" />
             <ui:NavigationViewItem
                 Content="About"
                 Icon="Help"
