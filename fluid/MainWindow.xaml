@@ -1,0 +1,62 @@
+﻿<Window
+    x:Class="fluid_general.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:ModernWpf.Controls;assembly=ModernWpf.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:fluid_general"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="Fluid General"
+    Width="1010"
+    Height="700"
+    ui:ThemeManager.IsThemeAware="True"
+    ui:TitleBar.Background="{StaticResource PrimaryHeaderBrush}"
+    ui:WindowHelper.UseModernWindowStyle="True"
+    ResizeMode="CanResizeWithGrip"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <ui:NavigationView
+        x:Name="NaviView"
+        Header="Fluid General"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="False"
+        IsTitleBarAutoPaddingEnabled="False"
+        OpenPaneLength="200"
+        PaneDisplayMode="Left"
+        SelectionChanged="NaviView_SelectionChanged">
+        <ui:NavigationView.MenuItems>
+            <ui:NavigationViewItem
+                Content="繧､繝吶Φ繝・
+                Icon="Home"
+                IsSelected="True"
+                Tag="{x:Static local:NaviIcon.Event}" />
+            <ui:NavigationViewItem
+                Content="蟇ｮ逕溷錐邁ｿ"
+                Icon="Contact"
+                IsSelected="True"
+                Tag="{x:Static local:NaviIcon.Roster}" />
+            <ui:NavigationViewItem
+                Content="菴ｿ縺・婿"
+                Icon="Library"
+                IsSelected="True"
+                Tag="{x:Static local:NaviIcon.Library}" />
+
+        </ui:NavigationView.MenuItems>
+        <ui:NavigationView.FooterMenuItems>
+            <ui:NavigationViewItem Content="Setings" Icon="Setting" />
+
+            <ui:NavigationViewItem
+                Content="About"
+                Icon="Help"
+                Tag="{x:Static local:NaviIcon.About}" />
+        </ui:NavigationView.FooterMenuItems>
+
+        <ScrollViewer Margin="0,0,0,12">
+            <ui:Frame
+                x:Name="ContentFrame"
+                Padding="12,0,12,12"
+                Navigated="ContentFrame_Navigated" />
+        </ScrollViewer>
+    </ui:NavigationView>
+</Window>
