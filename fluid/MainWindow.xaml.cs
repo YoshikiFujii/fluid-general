@@ -48,10 +48,17 @@ namespace fluid_general
                 int connectionCount = App.GetActiveConnectionCount();
                 string connectionText = connectionCount > 0 ? $" (接続数: {connectionCount})" : "";
                 this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード{connectionText}" : $"{baseTitle} - 親機モード (IP: {localIp}){connectionText}";
+                
+                // 親機モードは薄い赤色にする
+                var parentBrush = new SolidColorBrush(Color.FromRgb(255, 235, 235));
+                ModernWpf.Controls.TitleBar.SetBackground(this, parentBrush);
             }
             else
             {
                 this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
+                
+                // 子機モードはデフォルトの色
+                ModernWpf.Controls.TitleBar.SetBackground(this, null);
             }
         }
 
