@@ -15,6 +15,10 @@ namespace fluid_general.Services
         {
             _httpClient = new HttpClient();
             _httpClient.Timeout = TimeSpan.FromSeconds(2); // タイムアウトを短く設定
+            
+            // 自分のPC名をヘッダーに付与（親機側で識別するため）
+            _httpClient.DefaultRequestHeaders.Add("X-Fluid-MachineName", Environment.MachineName);
+
             // App.ServerBaseUrlは必ずスラッシュで終わる前提
             if (App.ServerBaseUrl != null)
             {

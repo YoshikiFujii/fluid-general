@@ -29,24 +29,27 @@ namespace fluid_general
     public partial class App : Application
     {
         private static IHost? _host;
-        private static ConcurrentDictionary<string, DateTime> _activeTerminals = new ConcurrentDictionary<string, DateTime>();
+        private static ConcurrentDictionary<string, (string Name, DateTime LastSeen)> _activeTerminals = new();
 
-        public static void RegisterTerminalActivity(string ip)
+        public static void RegisterTerminalActivity(string ip, string? name)
         {
             if (string.IsNullOrEmpty(ip) || ip == "::1" || ip == "127.0.0.1") return;
-            _activeTerminals[ip] = DateTime.Now;
+            _activeTerminals[ip] = (name ?? "Unknown", DateTime.Now);
         }
 
         public static int GetActiveConnectionCount()
         {
             var threshold = DateTime.Now.AddSeconds(-30);
-            return _activeTerminals.Values.Count(v => v > threshold);
+            return _activeTerminals.Values.Count(v => v.LastSeen > threshold);
         }
 
         public static List<string> GetActiveTerminalList()
         {
             var threshold = DateTime.Now.AddSeconds(-30);
-            return _activeTerminals.Where(kvp => kvp.Value > threshold).Select(kvp => kvp.Key).ToList();
+            return _activeTerminals
+                .Where(kvp => kvp.Value.LastSeen > threshold)
+                .Select(kvp => $"{kvp.Value.Name} ({kvp.Key})")
+                .ToList();
         }
         
         // 接続先URLの変更通知
@@ -93,7 +96,8 @@ namespace fluid_general
                         app.Use(async (context, next) =>
                         {
                             string? ip = context.Connection.RemoteIpAddress?.ToString();
-                            if (ip != null) RegisterTerminalActivity(ip);
+                            string? name = context.Request.Headers["X-Fluid-MachineName"].FirstOrDefault();
+                            if (ip != null) RegisterTerminalActivity(ip, name);
                             await next();
                         });
                         app.UseEndpoints(endpoints => { endpoints.MapControllers(); });

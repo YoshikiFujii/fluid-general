@@ -29,33 +29,39 @@ namespace fluid_general.Pages
 
         private async void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
+            await ProcessConnectionAsync(ServerAddressTextBox.Text.Trim());
+        }
+
+        private async Task ProcessConnectionAsync(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url) || url == "http://")
+            {
+                StatusTextBlock.Text = "有効なURLを入力してください。";
+                StatusTextBlock.Foreground = new SolidColorBrush(Colors.Red);
+                return;
+            }
+
+            if (!url.EndsWith("/")) url += "/";
+
             ConnectButton.IsEnabled = false;
             StatusTextBlock.Text = "接続テスト中...";
             StatusTextBlock.Foreground = new SolidColorBrush(Colors.Black);
-
-            string url = ServerAddressTextBox.Text.Trim();
-            if (!url.EndsWith("/"))
-            {
-                url += "/";
-            }
 
             try
             {
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(5);
+                client.DefaultRequestHeaders.Add("X-Fluid-MachineName", Environment.MachineName);
                 
-                // 親機のAPIを叩いて生存確認 (GET /api/members は空でも200OKを返すはず)
+                // 親機のAPIを叩いて生存確認
                 var response = await client.GetAsync($"{url}api/members");
-                
+
                 if (response.IsSuccessStatusCode)
                 {
                     StatusTextBlock.Text = "接続成功！これ以降の認証は親機に送信されます。";
                     StatusTextBlock.Foreground = new SolidColorBrush(Colors.Green);
-                    
-                    // アプリケーション全体でこのURLを使用するように設定
+                    ServerAddressTextBox.Text = url;
                     App.ServerBaseUrl = url;
-
-                    // タイトルを更新
                     UpdateMainWindowTitle();
                     DisconnectButton.IsEnabled = true;
                 }
@@ -64,8 +70,6 @@ namespace fluid_general.Pages
                     StatusTextBlock.Text = $"接続に失敗しました (ステータスコード: {response.StatusCode})";
                     StatusTextBlock.Foreground = new SolidColorBrush(Colors.Red);
                     App.ServerBaseUrl = null;
-                    UpdateMainWindowTitle();
-                    DisconnectButton.IsEnabled = false;
                 }
             }
             catch (Exception ex)
@@ -77,6 +81,7 @@ namespace fluid_general.Pages
             finally
             {
                 ConnectButton.IsEnabled = true;
+                UpdateMainWindowTitle();
             }
         }
 
@@ -96,12 +101,10 @@ namespace fluid_general.Pages
             var mainWindow = Window.GetWindow(this) as MainWindow;
             if (mainWindow != null)
             {
-                // MainWindowに公開されたメソッドを呼ぶか、直接Titleを操作する
-                // 先ほどMainWindowにUpdateTitleを追加したので、それをリフレクションで呼ぶか
-                // 直接操作する
                 mainWindow.UpdateTitle();
             }
         }
+
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             SearchButton.IsEnabled = false;
@@ -118,7 +121,6 @@ namespace fluid_general.Pages
             {
                 foreach (var entry in parents)
                 {
-                    // entry は "MachineName|IP" 形式
                     var parts = entry.Split('|');
                     string machineName = parts[0];
                     string ip = parts[1];
@@ -130,17 +132,17 @@ namespace fluid_general.Pages
             SearchButton.IsEnabled = true;
         }
 
-        private void ParentListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void ParentListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ParentListBox.SelectedItem is string selectedText)
             {
-                // "MachineName (IP)" 形式から IP を抽出
                 int start = selectedText.LastIndexOf('(');
                 int end = selectedText.LastIndexOf(')');
                 if (start != -1 && end != -1)
                 {
                     string ip = selectedText.Substring(start + 1, end - start - 1);
-                    ServerAddressTextBox.Text = $"http://{ip}:5000/";
+                    string url = $"http://{ip}:5000/";
+                    await ProcessConnectionAsync(url);
                 }
             }
         }
