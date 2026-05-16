@@ -1,6 +1,8 @@
 using Microsoft.Win32;
 using ModernWpf;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -26,7 +28,26 @@ namespace fluid_general
     /// </summary>
     public partial class App : Application
     {
-        private IHost? _host;
+        private static IHost? _host;
+        private static ConcurrentDictionary<string, DateTime> _activeTerminals = new ConcurrentDictionary<string, DateTime>();
+
+        public static void RegisterTerminalActivity(string ip)
+        {
+            if (string.IsNullOrEmpty(ip) || ip == "::1" || ip == "127.0.0.1") return;
+            _activeTerminals[ip] = DateTime.Now;
+        }
+
+        public static int GetActiveConnectionCount()
+        {
+            var threshold = DateTime.Now.AddSeconds(-30);
+            return _activeTerminals.Values.Count(v => v > threshold);
+        }
+
+        public static List<string> GetActiveTerminalList()
+        {
+            var threshold = DateTime.Now.AddSeconds(-30);
+            return _activeTerminals.Where(kvp => kvp.Value > threshold).Select(kvp => kvp.Key).ToList();
+        }
         
         // 子機モード（他PCのセッションに接続）として動作する場合のベースURL
         public static string? ServerBaseUrl 
@@ -64,6 +85,13 @@ namespace fluid_general
                     webBuilder.Configure(app =>
                     {
                         app.UseRouting();
+                        // 端末のアクティビティを記録するミドルウェア
+                        app.Use(async (context, next) =>
+                        {
+                            string? ip = context.Connection.RemoteIpAddress?.ToString();
+                            if (ip != null) RegisterTerminalActivity(ip);
+                            await next();
+                        });
                         app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
                     });
                     webBuilder.ConfigureServices(services =>

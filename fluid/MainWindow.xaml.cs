@@ -44,14 +44,9 @@ namespace fluid_general
             if (string.IsNullOrEmpty(App.ServerBaseUrl))
             {
                 string localIp = Utils.NetworkUtils.GetLocalIPAddress();
-                if (!string.IsNullOrEmpty(localIp))
-                {
-                    this.Title = $"{baseTitle} - 親機モード (IP: {localIp})";
-                }
-                else
-                {
-                    this.Title = $"{baseTitle} - 親機モード";
-                }
+                int connectionCount = App.GetActiveConnectionCount();
+                string connectionText = connectionCount > 0 ? $" (接続数: {connectionCount})" : "";
+                this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード{connectionText}" : $"{baseTitle} - 親機モード (IP: {localIp}){connectionText}";
             }
             else
             {

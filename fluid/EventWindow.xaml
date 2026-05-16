@@ -46,6 +46,38 @@
                     <MenuItem Click="aboutButtonClick" Header="About" />
                 </MenuItem>
             </Menu>
+
+            <!-- 接続端末数表示 -->
+            <Button
+                x:Name="ConnectionStatusButton"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Stretch"
+                Background="Transparent"
+                BorderThickness="0"
+                Padding="12,0"
+                Visibility="Collapsed">
+                <ui:FlyoutService.Flyout>
+                    <ui:Flyout>
+                        <StackPanel Width="200">
+                            <TextBlock Text="接続中の子機" FontWeight="Bold" Margin="0,0,0,10" />
+                            <ListBox x:Name="ActiveTerminalsListBox" BorderThickness="0" Background="Transparent">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Margin="0,2">
+                                            <ui:SymbolIcon Symbol="Remote" Margin="0,0,8,0" />
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </ui:Flyout>
+                </ui:FlyoutService.Flyout>
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Remote" Margin="0,0,8,0" />
+                    <TextBlock x:Name="ConnectionCountTextBlock" Text="0" FontWeight="Bold" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
         </Grid>
         <Grid
             Grid.Row="1"

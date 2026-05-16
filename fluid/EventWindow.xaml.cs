@@ -1116,6 +1116,9 @@ namespace fluid_general
                 }
                 UpdateProgressBar();
                 _syncFailureCount = 0; // 成功したのでリセット
+
+                // 接続端末数の更新
+                UpdateConnectionStatus();
             }
             catch
             {
@@ -1162,11 +1165,36 @@ namespace fluid_general
             if (string.IsNullOrEmpty(App.ServerBaseUrl))
             {
                 string localIp = Utils.NetworkUtils.GetLocalIPAddress();
-                this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード" : $"{baseTitle} - 親機モード (IP: {localIp})";
+                int connectionCount = App.GetActiveConnectionCount();
+                string connectionText = connectionCount > 0 ? $" (接続数: {connectionCount})" : "";
+                this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード{connectionText}" : $"{baseTitle} - 親機モード (IP: {localIp}){connectionText}";
             }
             else
             {
                 this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
+            }
+
+            // タイトルバー以外（メニューバー右端）のUIも更新
+            UpdateConnectionStatus();
+        }
+
+        private void UpdateConnectionStatus()
+        {
+            if (string.IsNullOrEmpty(App.ServerBaseUrl))
+            {
+                // 親機モードの場合のみ接続数を表示
+                int count = App.GetActiveConnectionCount();
+                ConnectionCountTextBlock.Text = count.ToString();
+                ConnectionStatusButton.Visibility = count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+                if (count > 0)
+                {
+                    ActiveTerminalsListBox.ItemsSource = App.GetActiveTerminalList();
+                }
+            }
+            else
+            {
+                ConnectionStatusButton.Visibility = Visibility.Collapsed;
             }
         }
 
