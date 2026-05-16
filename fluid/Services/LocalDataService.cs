@@ -109,10 +109,10 @@ namespace fluid_general.Services
             }
         }
 
-        public async Task DeleteMemberAsync(string studentNumber)
+        public async Task DeleteMemberAsync(string rosterName, int excelId)
         {
             using var db = GetContext();
-            var member = await db.Members.FirstOrDefaultAsync(m => m.StudentNumber == studentNumber);
+            var member = await db.Members.FirstOrDefaultAsync(m => m.RosterName == rosterName && m.ExcelId == excelId);
             if (member != null)
             {
                 db.Members.Remove(member);

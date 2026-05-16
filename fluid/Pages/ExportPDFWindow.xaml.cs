@@ -151,8 +151,8 @@ namespace fluid_general.Pages
                     var members = await service.GetMembersByRosterAsync(_eventConfig.RosterName);
                     var logs = await service.GetCheckInLogsAsync(_eventConfig.Id);
 
-                    // 未参加のメンバーを特定
-                    var unparticipatedMembers = members.Where(m => !logs.Any(l => l.Member.StudentNumber == m.StudentNumber)).ToList();
+                    // 未参加のメンバーを特定 (RosterName と ExcelId で照合)
+                    var unparticipatedMembers = members.Where(m => !logs.Any(l => l.RosterName == m.RosterName && l.ExcelId == m.ExcelId && l.Status == "参加済み")).ToList();
 
                     if (unparticipatedMembers.Count == 0)
                     {
@@ -175,7 +175,8 @@ namespace fluid_general.Pages
 
                             var member = unparticipatedMembers[i];
                             string name = member.Name;
-                            string roomNumber = member.CustomFields.GetValueOrDefault("RoomNumber", "");
+                            // 互換性のため "RoomNumber" または "部屋番号" を探す
+                            string roomNumber = member.CustomFields.GetValueOrDefault("RoomNumber") ?? member.CustomFields.GetValueOrDefault("部屋番号", "");
                             string tempPdfPath = Path.Combine(tempDir, $"temp_{i}.pdf");
 
 

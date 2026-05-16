@@ -206,7 +206,7 @@ namespace fluid_general.Pages
                         var members = await service.GetMembersByRosterAsync(rosterName);
                         foreach (var member in members)
                         {
-                            await service.DeleteMemberAsync(member.StudentNumber);
+                            await service.DeleteMemberAsync(member.RosterName, member.ExcelId);
                         }
                         LoadRosterFiles();
                     }
@@ -215,6 +215,22 @@ namespace fluid_general.Pages
                         MessageBox.Show($"削除失敗: {ex.Message}");
                     }
                 }
+            }
+        }
+
+        private void RosterDataGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (RosterDataGrid.SelectedItem != null)
+            {
+                dynamic selectedItem = RosterDataGrid.SelectedItem;
+                string rosterName = selectedItem.RosterName;
+
+                var detailWindow = new RosterDetailWindow(rosterName);
+                detailWindow.Owner = Window.GetWindow(this);
+                detailWindow.ShowDialog();
+
+                // メンバー数などが変わった可能性があるためリロードする
+                LoadRosterFiles();
             }
         }
     }

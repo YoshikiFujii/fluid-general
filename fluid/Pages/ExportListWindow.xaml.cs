@@ -10,13 +10,24 @@ using System.Xml.Linq;
 
 namespace fluid_general.Pages
 {
-    /// <summary>
-    /// ExportListWindow.xaml の相互作用ロジック
-    /// </summary>
+    public class ColumnItem : System.ComponentModel.INotifyPropertyChanged
+    {
+        public string Label { get; set; }
+        private bool isChecked;
+        public bool IsChecked
+        {
+            get => isChecked;
+            set { isChecked = value; OnPropertyChanged(nameof(IsChecked)); }
+        }
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+    }
+
     public partial class ExportListWindow : Window
     {
         private Models.EventConfig _eventConfig;
         private string CurrentEvent;
+        public System.Collections.ObjectModel.ObservableCollection<ColumnItem> ExportColumns { get; set; } = new System.Collections.ObjectModel.ObservableCollection<ColumnItem>();
 
         public ExportListWindow(Models.EventConfig eventConfig)
         {
@@ -24,6 +35,28 @@ namespace fluid_general.Pages
             CurrentEvent = eventConfig.EventName;
 
             InitializeComponent();
+            DataContext = this;
+            ColumnsItemsControl.ItemsSource = ExportColumns;
+            _ = LoadColumnsAsync();
+        }
+
+        private async System.Threading.Tasks.Task LoadColumnsAsync()
+        {
+            var service = App.GetDataService();
+            var config = await service.GetRosterConfigAsync(_eventConfig.RosterName);
+            
+            ExportColumns.Add(new ColumnItem { Label = "名前", IsChecked = true });
+            ExportColumns.Add(new ColumnItem { Label = "名前（かな）", IsChecked = true });
+            ExportColumns.Add(new ColumnItem { Label = "学籍番号", IsChecked = true });
+
+            if (config?.Mappings != null)
+            {
+                foreach (var mapping in config.Mappings)
+                {
+                    if (mapping.Label == "ID" || mapping.Label == "名前" || mapping.Label == "名前（かな）" || mapping.Label == "学籍番号") continue;
+                    ExportColumns.Add(new ColumnItem { Label = mapping.Label, IsChecked = true });
+                }
+            }
         }
 
         // ファイルが使用中かどうかを確認するヘルパーメソッド
@@ -50,15 +83,16 @@ namespace fluid_general.Pages
             var logs = await service.GetCheckInLogsAsync(_eventConfig.Id);
 
             int totalCount = members.Count;
-            int firstTotal = members.Count(m => m.CustomFields.GetValueOrDefault("Year") == "新");
+            // 互換性のため "Year" または "区分" を探す
+            int firstTotal = members.Count(m => m.CustomFields.GetValueOrDefault("Year") == "新" || m.CustomFields.GetValueOrDefault("区分") == "新");
             int secondTotal = totalCount - firstTotal;
-            int maleTotal = members.Count(m => m.CustomFields.GetValueOrDefault("Gender") == "男");
+            int maleTotal = members.Count(m => m.CustomFields.GetValueOrDefault("Gender") == "男" || m.CustomFields.GetValueOrDefault("性別") == "男");
             int femaleTotal = totalCount - maleTotal;
 
             int attendedCount = logs.Count(l => l.Status == "参加済み");
-            int firstAttended = members.Count(m => m.CustomFields.GetValueOrDefault("Year") == "新" && logs.Any(l => l.Member.StudentNumber == m.StudentNumber && l.Status == "参加済み"));
+            int firstAttended = members.Count(m => (m.CustomFields.GetValueOrDefault("Year") == "新" || m.CustomFields.GetValueOrDefault("区分") == "新") && logs.Any(l => l.ExcelId == m.ExcelId && l.Status == "参加済み"));
             int secondAttended = attendedCount - firstAttended;
-            int maleAttended = members.Count(m => m.CustomFields.GetValueOrDefault("Gender") == "男" && logs.Any(l => l.Member.StudentNumber == m.StudentNumber && l.Status == "参加済み"));
+            int maleAttended = members.Count(m => (m.CustomFields.GetValueOrDefault("Gender") == "男" || m.CustomFields.GetValueOrDefault("性別") == "男") && logs.Any(l => l.ExcelId == m.ExcelId && l.Status == "参加済み"));
             int femaleAttended = attendedCount - maleAttended;
 
             return new List<Tuple<string, int, int>>
@@ -111,32 +145,28 @@ namespace fluid_general.Pages
                 {
                     var worksheet = workbook.Worksheets.Add(CurrentEvent);
                     int col = 1;
+                    var selectedColumns = ExportColumns.Where(c => c.IsChecked).ToList();
 
-                    // ヘッダー
-                    if (roomNumCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "部屋番号";
-                    if (genderCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "性別";
-                    if (nameCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "名前";
-                    if (kanaNameCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "名前(カナ)";
-                    if (studentNumCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "学生番号";
-                    if (departCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "学科";
-                    if (yearCheckBox.IsChecked == true) worksheet.Cell(1, col++).Value = "区分";
+                    foreach (var column in selectedColumns)
+                    {
+                        worksheet.Cell(1, col++).Value = column.Label;
+                    }
                     worksheet.Cell(1, col++).Value = "参加状況";
 
-                    // データ
                     int row = 2;
                     foreach (var m in filteredMembers)
                     {
                         col = 1;
-                        var log = logs.FirstOrDefault(l => l.Member.StudentNumber == m.StudentNumber);
+                        var log = logs.FirstOrDefault(l => l.ExcelId == m.ExcelId);
                         string status = log?.Status ?? "未参加";
 
-                        if (roomNumCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("RoomNumber");
-                        if (genderCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("Gender");
-                        if (nameCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.Name;
-                        if (kanaNameCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.Kana;
-                        if (studentNumCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.StudentNumber;
-                        if (departCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("Department");
-                        if (yearCheckBox.IsChecked == true) worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault("Year");
+                        foreach (var column in selectedColumns)
+                        {
+                            if (column.Label == "名前") worksheet.Cell(row, col++).Value = m.Name;
+                            else if (column.Label == "名前（かな）") worksheet.Cell(row, col++).Value = m.Kana;
+                            else if (column.Label == "学籍番号") worksheet.Cell(row, col++).Value = m.StudentNumber;
+                            else worksheet.Cell(row, col++).Value = m.CustomFields.GetValueOrDefault(column.Label);
+                        }
                         worksheet.Cell(row, col++).Value = status;
                         row++;
                     }

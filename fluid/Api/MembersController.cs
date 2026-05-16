@@ -193,10 +193,10 @@ namespace fluid_general.Api
             return NoContent();
         }
 
-        [HttpDelete("{studentNumber}")]
-        public async Task<IActionResult> DeleteMember(string studentNumber)
+        [HttpDelete("{rosterName}/{excelId}")]
+        public async Task<IActionResult> DeleteMember(string rosterName, int excelId)
         {
-            var member = await _context.Members.FirstOrDefaultAsync(m => m.StudentNumber == studentNumber);
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.RosterName == rosterName && m.ExcelId == excelId);
             if (member == null) return NotFound();
             _context.Members.Remove(member);
             await _context.SaveChangesAsync();

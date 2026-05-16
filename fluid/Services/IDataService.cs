@@ -19,7 +19,7 @@ namespace fluid_general.Services
         Task<Member?> GetMemberAsync(string studentNumber);
         Task<Member> CreateMemberAsync(Member member);
         Task UpdateMemberAsync(Member member);
-        Task DeleteMemberAsync(string studentNumber);
+        Task DeleteMemberAsync(string rosterName, int excelId);
 
         // チェックイン（認証）関連
         Task<CheckInLog?> CheckInAsync(string rosterName, int excelId, int eventId);

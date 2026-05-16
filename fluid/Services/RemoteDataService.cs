@@ -95,9 +95,9 @@ namespace fluid_general.Services
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task DeleteMemberAsync(string studentNumber)
+        public async Task DeleteMemberAsync(string rosterName, int excelId)
         {
-            var response = await _httpClient.DeleteAsync($"api/members/{studentNumber}");
+            var response = await _httpClient.DeleteAsync($"api/members/{Uri.EscapeDataString(rosterName)}/{excelId}");
             response.EnsureSuccessStatusCode();
         }
 

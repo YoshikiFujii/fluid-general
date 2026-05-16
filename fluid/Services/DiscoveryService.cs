@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -97,7 +98,16 @@ namespace fluid_general.Services
                         string response = Encoding.UTF8.GetString(result.Buffer);
                         if (response.StartsWith(DiscoveryResponse))
                         {
-                            string ip = result.RemoteEndPoint.Address.ToString();
+                            var remoteIp = result.RemoteEndPoint.Address;
+                            
+                            // 自分自身を除外（自分のIPアドレス一覧に含まれているかチェック）
+                            var host = Dns.GetHostEntry(Dns.GetHostName());
+                            if (host.AddressList.Any(a => a.Equals(remoteIp)))
+                            {
+                                continue;
+                            }
+
+                            string ip = remoteIp.ToString();
                             string machineName = response.Contains("|") ? response.Split('|')[1] : "Unknown";
                             string entry = $"{machineName}|{ip}";
                             
