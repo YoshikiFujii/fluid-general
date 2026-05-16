@@ -128,6 +128,8 @@ namespace fluid_general
 
             UpdateTitle();
 
+            App.ConnectionModeChanged += OnConnectionModeChanged;
+
             _currentEventConfig = selectedEvent;
             currentEvent = selectedEvent.EventName;
             EventHeader.Text = currentEvent;
@@ -816,7 +818,12 @@ namespace fluid_general
             catch (Exception ex)
             {
                 App.LogError(ex);
-                MessageBox.Show($"ステータスの保存に失敗しました: {ex.Message}");
+                // 通信エラー（HttpRequestException等）の場合は、Appのウォッチドッグが切断処理を行うため
+                // ここではユーザーにメッセージボックスを出さないようにする。
+                if (!(ex is System.Net.Http.HttpRequestException || ex is TaskCanceledException))
+                {
+                    MessageBox.Show($"名簿の取得に失敗しました: {ex.Message}");
+                }
             }
         }
         // テキストボックスでの入力に基づいてリストをフィルタリング
@@ -955,6 +962,7 @@ namespace fluid_general
         }
         void EventWindow_Closing(object sender, CancelEventArgs e)
         {
+            App.ConnectionModeChanged -= OnConnectionModeChanged;
             _syncTimer?.Stop();
             try
             {
@@ -1115,22 +1123,13 @@ namespace fluid_general
                     }
                 }
                 UpdateProgressBar();
-                _syncFailureCount = 0; // 成功したのでリセット
 
                 // 接続端末数の更新
                 UpdateConnectionStatus();
             }
             catch
             {
-                // 通信エラーなどはバックグラウンド同期なのでログ出力のみ
-                if (!string.IsNullOrEmpty(App.ServerBaseUrl))
-                {
-                    _syncFailureCount++;
-                    if (_syncFailureCount >= MaxSyncFailures)
-                    {
-                        Dispatcher.Invoke(() => HandleAutoDisconnect());
-                    }
-                }
+                // 通信エラーは App クラスのウォッチドッグが処理するため、ここでは何もしない
             }
             finally
             {
@@ -1138,23 +1137,13 @@ namespace fluid_general
             }
         }
 
-        private void HandleAutoDisconnect()
+        private void OnConnectionModeChanged(object? sender, EventArgs e)
         {
-            _syncTimer?.Stop();
-            App.ServerBaseUrl = null;
-            MessageBox.Show("親機との接続が切れました。親機モード（ローカル接続）に切り替えます。", "接続エラー", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-            // ローカルデータで画面を更新
-            _ = RefreshRosterListAsync();
-
-            // ウィンドウのタイトルを更新
-            UpdateTitle();
-
-            // メインウィンドウのタイトルを更新
-            if (Application.Current.MainWindow is MainWindow mw)
+            Dispatcher.Invoke(() =>
             {
-                mw.UpdateTitle();
-            }
+                UpdateTitle();
+                _ = RefreshRosterListAsync();
+            });
         }
 
         private void UpdateTitle()
@@ -1265,7 +1254,13 @@ namespace fluid_general
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"リストの更新中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                App.LogError(ex);
+                // 通信エラー（HttpRequestException等）の場合は、Appのウォッチドッグが切断処理を行うため
+                // ここではユーザーにメッセージボックスを出さないようにする。
+                if (!(ex is System.Net.Http.HttpRequestException || ex is System.Threading.Tasks.TaskCanceledException))
+                {
+                    MessageBox.Show($"リストの更新中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 

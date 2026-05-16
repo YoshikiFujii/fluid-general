@@ -34,7 +34,8 @@ namespace fluid_general
         public MainWindow()
         {
             InitializeComponent();
-            UpdateTitle();
+            Loaded += (s, e) => UpdateTitle();
+            App.ConnectionModeChanged += (s, e) => Dispatcher.Invoke(UpdateTitle);
             ContentFrame.Navigate(new Pages.EventPage());
         }
 

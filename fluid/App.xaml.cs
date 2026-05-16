@@ -49,6 +49,9 @@ namespace fluid_general
             return _activeTerminals.Where(kvp => kvp.Value > threshold).Select(kvp => kvp.Key).ToList();
         }
         
+        // 接続先URLの変更通知
+        public static event EventHandler? ConnectionModeChanged;
+
         // 子機モード（他PCのセッションに接続）として動作する場合のベースURL
         public static string? ServerBaseUrl 
         { 
@@ -57,6 +60,7 @@ namespace fluid_general
             {
                 fluid_general.Properties.Settings.Default.ServerBaseUrl = value;
                 fluid_general.Properties.Settings.Default.Save();
+                ConnectionModeChanged?.Invoke(null, EventArgs.Empty);
             }
         }
 
@@ -265,7 +269,61 @@ namespace fluid_general
 
             // 探索用サーバーの起動
             Services.DiscoveryService.StartServer();
+
+            // 接続状態の監視タイマー開始
+            StartConnectionWatchdog();
         }
+
+        private static System.Windows.Threading.DispatcherTimer? _connectionWatchdog;
+        private static int _globalSyncFailureCount = 0;
+        private const int MaxGlobalSyncFailures = 3;
+
+        private static void StartConnectionWatchdog()
+        {
+            _connectionWatchdog = new System.Windows.Threading.DispatcherTimer();
+            _connectionWatchdog.Interval = TimeSpan.FromSeconds(3);
+            _connectionWatchdog.Tick += async (s, e) => await CheckConnectionAsync();
+            _connectionWatchdog.Start();
+        }
+
+        private static async Task CheckConnectionAsync()
+        {
+            if (string.IsNullOrEmpty(ServerBaseUrl))
+            {
+                _globalSyncFailureCount = 0;
+                return;
+            }
+
+            try
+            {
+                var service = new Services.RemoteDataService();
+                // 軽いリクエストで生存確認
+                await service.GetEventsAsync();
+                _globalSyncFailureCount = 0;
+            }
+            catch
+            {
+                _globalSyncFailureCount++;
+                if (_globalSyncFailureCount >= MaxGlobalSyncFailures)
+                {
+                    HandleConnectionLoss();
+                }
+            }
+        }
+
+        private static void HandleConnectionLoss()
+        {
+            _globalSyncFailureCount = 0;
+            string? oldUrl = ServerBaseUrl;
+            if (string.IsNullOrEmpty(oldUrl)) return;
+
+            // 切断処理
+            ServerBaseUrl = null; 
+
+            MessageBox.Show($"親機({oldUrl})との接続が切れました。親機モード（ローカル接続）に切り替えます。", 
+                "接続エラー", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
         private void OnThemeChanged(ThemeManager sender, object args)
         {
             ApplyTheme(); // ModernWPFテーマが変更された場合
