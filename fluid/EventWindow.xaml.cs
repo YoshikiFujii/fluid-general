@@ -108,6 +108,8 @@ namespace fluid_general
         private Dictionary<string, BitmapImage> preloadGifs = new Dictionary<string, BitmapImage>();
         private int RandomSoundCount = 0;
         private System.Media.SoundPlayer player = null;
+        private System.Windows.Threading.DispatcherTimer _syncTimer;
+        private bool _isSyncing = false;
         SerialPort connectedPort = null;
         private bool AbsentErrorSettings = true;//欠席登録者が認証したときの設定 true:拒否 false:認証
         private SoundPlayer Sound1 = null;
@@ -126,7 +128,16 @@ namespace fluid_general
             string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             // ウィンドウタイトルに設定
-            this.Title = $"fluid-general - {version} - EventWindow";
+            string baseTitle = $"fluid-general - {version} - EventWindow";
+            if (string.IsNullOrEmpty(App.ServerBaseUrl))
+            {
+                string localIp = Utils.NetworkUtils.GetLocalIPAddress();
+                this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード" : $"{baseTitle} - 親機モード (IP: {localIp})";
+            }
+            else
+            {
+                this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
+            }
 
             _currentEventConfig = selectedEvent;
             currentEvent = selectedEvent.EventName;
@@ -140,6 +151,12 @@ namespace fluid_general
             {
                 Directory.CreateDirectory(LogFolderPath);
             }
+
+            // 同期タイマーの設定（3秒おきに最新の参加状況を取得）
+            _syncTimer = new System.Windows.Threading.DispatcherTimer();
+            _syncTimer.Interval = TimeSpan.FromSeconds(3);
+            _syncTimer.Tick += async (s, e) => await SyncCheckInLogsAsync();
+            _syncTimer.Start();
         }
         private async void LoadGifAsync()
         {
@@ -949,6 +966,7 @@ namespace fluid_general
         }
         void EventWindow_Closing(object sender, CancelEventArgs e)
         {
+            _syncTimer?.Stop();
             try
             {
                 if (connectedPort != null && connectedPort.IsOpen)
@@ -1078,6 +1096,47 @@ namespace fluid_general
             var dialog = new ExportDialog(_currentEventConfig);
             var result = await dialog.ShowAsync();
         }
+        private async Task SyncCheckInLogsAsync()
+        {
+            if (_isSyncing) return;
+            _isSyncing = true;
+
+            try
+            {
+                var service = App.GetDataService();
+                var logs = await service.GetCheckInLogsAsync(_currentEventConfig.Id);
+
+                // 取得したログを元にRosterItemsの状態を更新
+                foreach (var log in logs)
+                {
+                    var item = RosterItems.FirstOrDefault(r => r.ExcelId == log.ExcelId);
+                    if (item != null)
+                    {
+                        bool isRegistered = log.Status == "参加済み";
+                        bool isAbsent = log.Status == "不参加";
+                        bool isNotRegistered = log.Status == "未参加";
+
+                        // 変更がある場合のみプロパティを更新（UI通知を最小限にするため）
+                        if (item.IsRegistered != isRegistered || item.IsAbsent != isAbsent || item.IsNotRegistered != isNotRegistered)
+                        {
+                            item.IsRegistered = isRegistered;
+                            item.IsAbsent = isAbsent;
+                            item.IsNotRegistered = isNotRegistered;
+                        }
+                    }
+                }
+                UpdateProgressBar();
+            }
+            catch
+            {
+                // 通信エラーなどはバックグラウンド同期なのでログ出力のみ
+            }
+            finally
+            {
+                _isSyncing = false;
+            }
+        }
+
         public async Task RefreshRosterListAsync()
         {
             try

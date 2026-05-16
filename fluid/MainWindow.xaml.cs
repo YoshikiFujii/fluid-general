@@ -38,15 +38,24 @@ namespace fluid_general
             ContentFrame.Navigate(new Pages.EventPage());
         }
 
-        private void UpdateTitle()
+        public void UpdateTitle()
         {
+            string baseTitle = "Fluid General";
             if (string.IsNullOrEmpty(App.ServerBaseUrl))
             {
-                this.Title = "Fluid General - 親機モード";
+                string localIp = Utils.NetworkUtils.GetLocalIPAddress();
+                if (!string.IsNullOrEmpty(localIp))
+                {
+                    this.Title = $"{baseTitle} - 親機モード (IP: {localIp})";
+                }
+                else
+                {
+                    this.Title = $"{baseTitle} - 親機モード";
+                }
             }
             else
             {
-                this.Title = $"Fluid General - 子機モード (接続先: {App.ServerBaseUrl})";
+                this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
             }
         }
 

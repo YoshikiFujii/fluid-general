@@ -99,14 +99,7 @@ namespace fluid_general.Pages
                 // MainWindowに公開されたメソッドを呼ぶか、直接Titleを操作する
                 // 先ほどMainWindowにUpdateTitleを追加したので、それをリフレクションで呼ぶか
                 // 直接操作する
-                if (string.IsNullOrEmpty(App.ServerBaseUrl))
-                {
-                    mainWindow.Title = "Fluid General - 親機モード";
-                }
-                else
-                {
-                    mainWindow.Title = $"Fluid General - 子機モード (接続先: {App.ServerBaseUrl})";
-                }
+                mainWindow.UpdateTitle();
             }
         }
     }
