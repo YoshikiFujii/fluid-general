@@ -96,10 +96,6 @@ namespace fluid_general
 
         private int TotalParticipants;//progressnumberのそうす
         private int DoneParticipants;//progressnumberの値
-        private int FirstTotalParticipants;//1年の総数
-        private int FirstParticipants;//progressnumberの1年の値
-        private int SecondTotalParticipants;//2年の総数
-        private int SecondParticipants;//progressnumberの2年の値
 
         private bool isDialogOpen = false;
 
@@ -701,34 +697,13 @@ namespace fluid_general
         public void UpdateProgressBar()
         {
             TotalParticipants = RosterItems.Count;
-            FirstTotalParticipants = RosterItems.Count(r => r.Year == "新");
-            SecondTotalParticipants = TotalParticipants - FirstTotalParticipants;
-
             DoneParticipants = RosterItems.Count(r => r.IsRegistered);
-            FirstParticipants = RosterItems.Count(r => r.IsRegistered && r.Year == "新");
-            SecondParticipants = DoneParticipants - FirstParticipants;
 
-            WholeProgressBar.Minimum = 0;
-            WholeProgressBar.Maximum = TotalParticipants;
-            WholeProgressBar.Value = DoneParticipants;
-            FirstProgressBar.Minimum = 0;
-            FirstProgressBar.Maximum = FirstTotalParticipants;
-            FirstProgressBar.Value = FirstParticipants;
-            SecondProgressBar.Minimum = 0;
-            SecondProgressBar.Maximum = SecondTotalParticipants;
-            SecondProgressBar.Value = SecondParticipants;
+            WholeStatusText.Text = $"{DoneParticipants}人 / {TotalParticipants}人";
         }
 
-        public void UpdateProgressbarButtonCllick(object sender, RoutedEventArgs e)
-        {
-            UpdateProgressBar();
-        }
-
-        public async void StatusButtonClick(object sender, RoutedEventArgs e)
-        {
-            var dialog = new StatusDialog(_currentEventConfig.Id.ToString()); 
-            var result = await dialog.ShowAsync();
-        }
+        // ステータス詳細ボタンのハンドラーを削除
+        // 更新ボタンのハンドラーを削除
 
         public async void aboutButtonClick(object sender, RoutedEventArgs e)
         {
@@ -805,31 +780,7 @@ namespace fluid_general
         }
         private void UpdateProgressBar(RosterItem student, string currentStatus)
         {
-
-            if (currentStatus == "不参加")
-            {
-                WholeProgressBar.Maximum--;
-                if (student.Year == "新")
-                    FirstProgressBar.Maximum--;
-                if (student.Year == "在")
-                    SecondProgressBar.Maximum--;
-            }
-            else if (currentStatus == "参加済み")
-            {
-                WholeProgressBar.Value++;
-                if (student.Year == "新")
-                    FirstProgressBar.Value++;
-                if (student.Year == "在")
-                    SecondProgressBar.Value++;
-            }
-            else
-            {
-                WholeProgressBar.Value--;
-                if (student.Year == "新")
-                    FirstProgressBar.Value--;
-                if (student.Year == "在")
-                    SecondProgressBar.Value--;
-            }
+            UpdateProgressBar();
         }
         // 選択された状態を保存する
         //設定をイベントファイルに保存する
@@ -888,15 +839,25 @@ namespace fluid_general
         }
 
 
-        // リストのフィルタリング処理
         private void FilterRosterList()
         {
-            string searchRoomNumber = SearchByRNBox.Text.ToLower();
-            string searchName = SearchByNameBox.Text.ToLower();
+            string query = GeneralSearchBox.Text.ToLower();
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                RosterListView.ItemsSource = RosterItems;
+                return;
+            }
 
             var filteredList = RosterItems.Where(item =>
-                (string.IsNullOrEmpty(searchRoomNumber) || item.RoomNumber.ToLower().Contains(searchRoomNumber)) &&
-                (string.IsNullOrEmpty(searchName) || item.Name.ToLower().Contains(searchName) || ConvertToHiragana(item.Kana.ToLower()).Contains(searchName))
+                (item.RoomNumber?.ToLower().Contains(query) == true) ||
+                (item.Name?.ToLower().Contains(query) == true) ||
+                (item.Kana?.ToLower().Contains(query) == true) ||
+                (ConvertToHiragana(item.Kana?.ToLower() ?? "").Contains(query)) ||
+                (item.StudentNumber?.ToLower().Contains(query) == true) ||
+                (item.Department?.ToLower().Contains(query) == true) ||
+                (item.Year?.ToLower().Contains(query) == true) ||
+                (item.DisplayValues.Any(v => v?.ToLower().Contains(query) == true))
             ).ToList();
 
             RosterListView.ItemsSource = filteredList;

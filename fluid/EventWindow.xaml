@@ -59,7 +59,7 @@
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="120" />
-                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="*" />
                     <RowDefinition Height="3*" />
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0">
@@ -111,26 +111,9 @@
                             ShadowDepth="10" />
                     </Rectangle.Effect>
                 </Rectangle>
-                <Button
-                    Grid.Row="1"
-                    Width="40"
-                    Height="40"
-                    Margin="0,30,80,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Click="StatusButtonClick">
-                    <ui:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE8BC;" />
-                </Button>
-                <Button
-                    Grid.Row="1"
-                    Width="40"
-                    Height="40"
-                    Margin="0,30,30,0"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Click="UpdateProgressbarButtonCllick">
-                    <ui:FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE72C;" />
-                </Button>
+                <!--  ステータス詳細ボタンを削除  -->
+                <!--  更新ボタンを削除  -->
+
                 <StackPanel Grid.Row="1">
                     <TextBlock
                         Width="80"
@@ -139,39 +122,29 @@
                         FontSize="20"
                         Text="ステータス" />
 
-                    <TextBlock
-                        Margin="30,0,0,0"
-                        FontSize="20"
-                        Text="全体" />
-                    <ProgressBar
-                        Name="WholeProgressBar"
-                        Grid.Row="1"
-                        Height="20"
-                        Margin="30,0,30,0"
-                        Maximum="100"
-                        Minimum="0" />
-                    <TextBlock
-                        Margin="30,0,0,0"
-                        FontSize="20"
-                        Text="1年" />
-                    <ProgressBar
-                        Name="FirstProgressBar"
-                        Grid.Row="1"
-                        Height="20"
-                        Margin="30,0,30,0"
-                        Maximum="100"
-                        Minimum="0" />
-                    <TextBlock
-                        Margin="30,0,0,0"
-                        FontSize="20"
-                        Text="2年" />
-                    <ProgressBar
-                        Name="SecondProgressBar"
-                        Grid.Row="1"
-                        Height="20"
-                        Margin="30,0,30,0"
-                        Maximum="100"
-                        Minimum="0" />
+                    <Grid Margin="30,0,30,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            FontSize="18"
+                            Text="全体" />
+                        <TextBlock
+                            x:Name="WholeStatusText"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            FontSize="18" />
+                    </Grid>
                 </StackPanel>
                 <Rectangle
                     Grid.Row="2"
@@ -320,14 +293,17 @@
                         Width="40"
                         Height="40"
                         Margin="0,30,80,0"
-                        ToolTip="端末をシャットダウンする"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
-                        Visibility="Collapsed"
-                        Click="ShutdownTerminal">
-                        <ui:FontIcon x:Name="shutdownButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE7E8;" />
+                        Click="ShutdownTerminal"
+                        ToolTip="端末をシャットダウンする"
+                        Visibility="Collapsed">
+                        <ui:FontIcon
+                            x:Name="shutdownButtonIcon"
+                            FontFamily="Segoe MDL2 Assets"
+                            Glyph="&#xE7E8;" />
                     </Button>
-                    
+
                     <Button
                         x:Name="AddTerminalButton"
                         Grid.Row="0"
@@ -336,11 +312,14 @@
                         Width="40"
                         Height="40"
                         Margin="0,30,30,0"
-                        ToolTip="認証端末を接続する"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
-                        Click="AddTerminal">
-                        <ui:FontIcon x:Name="AddTerminalButtonIcon" FontFamily="Segoe MDL2 Assets" Glyph="&#xE710;" />
+                        Click="AddTerminal"
+                        ToolTip="認証端末を接続する">
+                        <ui:FontIcon
+                            x:Name="AddTerminalButtonIcon"
+                            FontFamily="Segoe MDL2 Assets"
+                            Glyph="&#xE710;" />
                     </Button>
                 </Grid>
                 <Grid Grid.Row="1">
@@ -350,8 +329,7 @@
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="90" />
-                        <ColumnDefinition Width="140" />
-                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="340" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Rectangle
@@ -377,25 +355,14 @@
                         FontSize="20"
                         Text="検索" />
                     <ui:AutoSuggestBox
-                        x:Name="SearchByRNBox"
+                        x:Name="GeneralSearchBox"
                         Grid.Row="0"
                         Grid.Column="1"
-                        Width="120"
+                        Width="320"
                         Margin="0,10,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Bottom"
-                        PlaceholderText="部屋番号"
-                        QueryIcon="Find"
-                        TextChanged="SearchBox_TextChanged" />
-                    <ui:AutoSuggestBox
-                        x:Name="SearchByNameBox"
-                        Grid.Row="0"
-                        Grid.Column="2"
-                        Width="200"
-                        Margin="0,10,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Bottom"
-                        PlaceholderText="名前"
+                        PlaceholderText="検索"
                         QueryIcon="Find"
                         TextChanged="SearchBox_TextChanged" />
                     <StackPanel
@@ -421,7 +388,7 @@
                             Content="不参加"
                             Unchecked="FilterList" />
                     </StackPanel>
-                    <!-- カラムヘッダー -->
+                    <!--  カラムヘッダー  -->
                     <Border
                         Grid.Row="1"
                         Grid.ColumnSpan="4"
@@ -480,7 +447,7 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    
+
                                     <!--  ラジオボタンのグループ  -->
                                     <StackPanel
                                         Margin="5"
