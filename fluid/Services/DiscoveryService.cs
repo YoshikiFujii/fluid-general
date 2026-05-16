@@ -43,7 +43,8 @@ namespace fluid_general.Services
                             
                             if (message == DiscoveryRequest)
                             {
-                                byte[] responseData = Encoding.UTF8.GetBytes(DiscoveryResponse);
+                                string response = $"{DiscoveryResponse}|{Environment.MachineName}";
+                                byte[] responseData = Encoding.UTF8.GetBytes(response);
                                 await _udpListener.SendAsync(responseData, responseData.Length, result.RemoteEndPoint);
                             }
                         }
@@ -94,14 +95,15 @@ namespace fluid_general.Services
                     {
                         var result = await client.ReceiveAsync();
                         string response = Encoding.UTF8.GetString(result.Buffer);
-                        if (response == DiscoveryResponse)
+                        if (response.StartsWith(DiscoveryResponse))
                         {
                             string ip = result.RemoteEndPoint.Address.ToString();
-                            // 自分自身を除外したい場合はここでチェック可能だが、
-                            // 基本的に子機モードで使うのでそのままリストアップする
-                            if (!foundParents.Contains(ip))
+                            string machineName = response.Contains("|") ? response.Split('|')[1] : "Unknown";
+                            string entry = $"{machineName}|{ip}";
+                            
+                            if (!foundParents.Contains(entry))
                             {
-                                foundParents.Add(ip);
+                                foundParents.Add(entry);
                             }
                         }
                     }

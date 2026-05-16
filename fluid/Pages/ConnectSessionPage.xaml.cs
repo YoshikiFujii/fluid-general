@@ -116,9 +116,13 @@ namespace fluid_general.Pages
             }
             else
             {
-                foreach (var ip in parents)
+                foreach (var entry in parents)
                 {
-                    ParentListBox.Items.Add(ip);
+                    // entry は "MachineName|IP" 形式
+                    var parts = entry.Split('|');
+                    string machineName = parts[0];
+                    string ip = parts[1];
+                    ParentListBox.Items.Add($"{machineName} ({ip})");
                 }
                 SearchStatusTextBlock.Text = $"{parents.Count} 台の親機が見つかりました。";
             }
@@ -128,9 +132,16 @@ namespace fluid_general.Pages
 
         private void ParentListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ParentListBox.SelectedItem is string ip)
+            if (ParentListBox.SelectedItem is string selectedText)
             {
-                ServerAddressTextBox.Text = $"http://{ip}:5000/";
+                // "MachineName (IP)" 形式から IP を抽出
+                int start = selectedText.LastIndexOf('(');
+                int end = selectedText.LastIndexOf(')');
+                if (start != -1 && end != -1)
+                {
+                    string ip = selectedText.Substring(start + 1, end - start - 1);
+                    ServerAddressTextBox.Text = $"http://{ip}:5000/";
+                }
             }
         }
     }

@@ -126,20 +126,7 @@ namespace fluid_general
         {
             InitializeComponent();
 
-            // バージョン情報を取得
-            string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-
-            // ウィンドウタイトルに設定
-            string baseTitle = $"fluid-general - {version} - EventWindow";
-            if (string.IsNullOrEmpty(App.ServerBaseUrl))
-            {
-                string localIp = Utils.NetworkUtils.GetLocalIPAddress();
-                this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード" : $"{baseTitle} - 親機モード (IP: {localIp})";
-            }
-            else
-            {
-                this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
-            }
+            UpdateTitle();
 
             _currentEventConfig = selectedEvent;
             currentEvent = selectedEvent.EventName;
@@ -1157,10 +1144,29 @@ namespace fluid_general
             // ローカルデータで画面を更新
             _ = RefreshRosterListAsync();
 
+            // ウィンドウのタイトルを更新
+            UpdateTitle();
+
             // メインウィンドウのタイトルを更新
             if (Application.Current.MainWindow is MainWindow mw)
             {
                 mw.UpdateTitle();
+            }
+        }
+
+        private void UpdateTitle()
+        {
+            string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            string baseTitle = $"fluid-general - {version} - EventWindow";
+
+            if (string.IsNullOrEmpty(App.ServerBaseUrl))
+            {
+                string localIp = Utils.NetworkUtils.GetLocalIPAddress();
+                this.Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード" : $"{baseTitle} - 親機モード (IP: {localIp})";
+            }
+            else
+            {
+                this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
             }
         }
 
