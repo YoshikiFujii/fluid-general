@@ -14,6 +14,7 @@ namespace fluid_general.Services
         public RemoteDataService()
         {
             _httpClient = new HttpClient();
+            _httpClient.Timeout = TimeSpan.FromSeconds(2); // タイムアウトを短く設定
             // App.ServerBaseUrlは必ずスラッシュで終わる前提
             if (App.ServerBaseUrl != null)
             {
