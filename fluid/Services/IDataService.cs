@@ -26,8 +26,8 @@ namespace fluid_general.Services
         Task UpdateCheckInStatusAsync(string rosterName, int excelId, int eventId, string status);
         Task<List<CheckInLog>> GetCheckInLogsAsync(int eventId);
         
-        // 名簿構成（マッピング）関連
+        // 名簿構成（マッピング・表示設定）関連
         Task<RosterConfig?> GetRosterConfigAsync(string rosterName);
-        Task SaveRosterConfigAsync(RosterConfig config);
+        Task UpdateRosterConfigAsync(RosterConfig config);
     }
 }

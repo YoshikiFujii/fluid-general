@@ -65,6 +65,13 @@ namespace fluid_general.Data
                     v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                     v => JsonSerializer.Deserialize<List<ColumnMapping>>(v, (JsonSerializerOptions?)null) ?? new List<ColumnMapping>()
                 );
+
+            modelBuilder.Entity<RosterConfig>()
+                .Property(e => e.DisplayColumns)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+                );
         }
     }
 }

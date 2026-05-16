@@ -27,7 +27,7 @@ namespace fluid_general.Api
         [HttpPost]
         public async Task<IActionResult> SaveConfig([FromBody] RosterConfig config)
         {
-            await _dataService.SaveRosterConfigAsync(config);
+            await _dataService.UpdateRosterConfigAsync(config);
             return Ok();
         }
     }

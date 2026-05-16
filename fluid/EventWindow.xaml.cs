@@ -36,6 +36,8 @@ namespace fluid_general
         public string Gender { get; set; }
         public string Department { get; set; }
         public string Year { get; set; }
+        public List<string> DisplayValues { get; set; } = new List<string>();
+
 
         private bool isRegistered;
         public bool IsRegistered
@@ -84,6 +86,7 @@ namespace fluid_general
     public partial class EventWindow : Window
     {
         public ObservableCollection<RosterItem> RosterItems { get; set; } = new ObservableCollection<RosterItem>();
+        public ObservableCollection<string> CurrentDisplayColumns { get; set; } = new ObservableCollection<string>();
         private SettingItem Settings { get; set; } = new SettingItem();
         private string LogFolderPath = System.IO.Path.Combine(App.AppDataPath, "log");
         private string currentEvent;
@@ -1128,25 +1131,47 @@ namespace fluid_general
                     LogList.AppendText($"[{DateTime.Now:HH:mm:ss}] [警告] 名簿 '{_currentEventConfig.RosterName}' にメンバーが登録されていません。\n");
                 }
  
+                var rosterConfig = await service.GetRosterConfigAsync(_currentEventConfig.RosterName);
+                var displayColumns = (rosterConfig?.DisplayColumns != null && rosterConfig.DisplayColumns.Count > 0) 
+                    ? rosterConfig.DisplayColumns 
+                    : new List<string> { "名前", "かな", "学籍番号" };
+
+                CurrentDisplayColumns.Clear();
+                foreach (var col in displayColumns) CurrentDisplayColumns.Add(col);
+
                 foreach (var member in members)
                 {
                     var log = logs.FirstOrDefault(l => l.RosterName == member.RosterName && l.ExcelId == member.ExcelId);
                     string status = log?.Status ?? "未参加";
  
-                    RosterItems.Add(new RosterItem
+                    var item = new RosterItem
                     {
                         ExcelId = member.ExcelId,
-                        RoomNumber = member.CustomFields.ContainsKey("RoomNumber") ? member.CustomFields["RoomNumber"] : "",
+                        RoomNumber = member.CustomFields.GetValueOrDefault("RoomNumber", ""),
                         Name = member.Name,
                         Kana = member.Kana,
                         StudentNumber = member.StudentNumber,
-                        Gender = member.CustomFields.ContainsKey("Gender") ? member.CustomFields["Gender"] : "",
-                        Department = member.CustomFields.ContainsKey("Department") ? member.CustomFields["Department"] : "",
-                        Year = member.CustomFields.ContainsKey("Year") ? member.CustomFields["Year"] : "",
+                        Gender = member.CustomFields.GetValueOrDefault("Gender", ""),
+                        Department = member.CustomFields.GetValueOrDefault("Department", ""),
+                        Year = member.CustomFields.GetValueOrDefault("Year", ""),
                         IsRegistered = status == "参加済み",
                         IsNotRegistered = status == "未参加",
                         IsAbsent = status == "不参加"
-                    });
+                    };
+
+                    foreach (var col in displayColumns)
+                    {
+                        string val = col switch
+                        {
+                            "名前" => member.Name,
+                            "かな" => member.Kana,
+                            "学籍番号" => member.StudentNumber,
+                            _ => member.CustomFields.GetValueOrDefault(col, "")
+                        };
+                        item.DisplayValues.Add(val);
+                    }
+
+                    RosterItems.Add(item);
                 }
                 RosterListView.ItemsSource = null;
                 RosterListView.ItemsSource = RosterItems;
@@ -1163,5 +1188,33 @@ namespace fluid_general
             }
         }
 
+        private async void DisplaySettingsClick(object sender, RoutedEventArgs e)
+        {
+            var service = App.GetDataService();
+            var members = await service.GetMembersByRosterAsync(_currentEventConfig.RosterName);
+            
+            // 全てのメンバーからユニークなカスタムフィールドキーを抽出
+            var allKeys = new List<string> { "名前", "かな", "学籍番号" };
+            allKeys.AddRange(members.SelectMany(m => m.CustomFields.Keys).Distinct());
+            allKeys = allKeys.Distinct().ToList();
+            
+            var rosterConfig = await service.GetRosterConfigAsync(_currentEventConfig.RosterName);
+            if (rosterConfig == null)
+            {
+                rosterConfig = new Models.RosterConfig { RosterName = _currentEventConfig.RosterName };
+                // デフォルトの表示順を設定
+                rosterConfig.DisplayColumns = new List<string> { "名前", "かな", "学籍番号" };
+            }
+
+            var dialog = new DisplaySettingsDialog(allKeys, rosterConfig.DisplayColumns);
+            var result = await dialog.ShowAsync();
+            
+            if (result == ContentDialogResult.Primary)
+            {
+                rosterConfig.DisplayColumns = dialog.SelectedColumns;
+                await service.UpdateRosterConfigAsync(rosterConfig);
+                await RefreshRosterListAsync();
+            }
+        }
     }
 }

@@ -208,7 +208,7 @@ namespace fluid_general.Services
             return await db.RosterConfigs.FindAsync(rosterName);
         }
 
-        public async Task SaveRosterConfigAsync(RosterConfig config)
+        public async Task UpdateRosterConfigAsync(RosterConfig config)
         {
             using var db = GetContext();
             var existing = await db.RosterConfigs.FindAsync(config.RosterName);
@@ -219,6 +219,7 @@ namespace fluid_general.Services
             else
             {
                 existing.Mappings = config.Mappings;
+                existing.DisplayColumns = config.DisplayColumns;
                 db.RosterConfigs.Update(existing);
             }
             await db.SaveChangesAsync();

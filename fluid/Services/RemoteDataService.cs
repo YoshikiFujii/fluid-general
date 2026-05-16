@@ -129,7 +129,7 @@ namespace fluid_general.Services
             }
         }
 
-        public async Task SaveRosterConfigAsync(RosterConfig config)
+        public async Task UpdateRosterConfigAsync(RosterConfig config)
         {
             var response = await _httpClient.PostAsJsonAsync("api/rosterconfigs", config);
             response.EnsureSuccessStatusCode();

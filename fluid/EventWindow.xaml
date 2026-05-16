@@ -40,6 +40,7 @@
                 </MenuItem>
                 <MenuItem Header="設定">
                     <MenuItem Click="SettingsButtonClick" Header="詳細設定" />
+                    <MenuItem Click="DisplaySettingsClick" Header="表示設定" />
                 </MenuItem>
                 <MenuItem Header="表示">
                     <MenuItem Click="aboutButtonClick" Header="About" />
@@ -420,12 +421,41 @@
                             Content="不参加"
                             Unchecked="FilterList" />
                     </StackPanel>
+                    <!-- カラムヘッダー -->
+                    <Border
+                        Grid.Row="1"
+                        Grid.ColumnSpan="4"
+                        Margin="25,5,25,0"
+                        VerticalAlignment="Top"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                        BorderThickness="0,0,0,1">
+                        <StackPanel Margin="10,5,10,5" Orientation="Horizontal">
+                            <ItemsControl ItemsSource="{Binding CurrentDisplayColumns}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock
+                                            Width="100"
+                                            Margin="5,0,5,0"
+                                            FontWeight="Bold"
+                                            Opacity="0.7"
+                                            Text="{Binding}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
                     <ui:ListView
                         x:Name="RosterListView"
                         Grid.Row="1"
                         Grid.ColumnSpan="4"
                         Width="Auto"
-                        Margin="20,10,20,20"
+                        Margin="20,40,20,20"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Top"
                         ItemsSource="{Binding RosterItems}"
@@ -434,29 +464,23 @@
                         <ui:ListView.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <!--  部屋番号  -->
-                                    <TextBlock
-                                        Width="50"
-                                        Margin="5,12,5,5"
-                                        Text="{Binding RoomNumber}" />
-                                    <!--  名前  -->
-                                    <TextBlock
-                                        Width="130"
-                                        Margin="5,12,5,5"
-                                        Text="{Binding Name}" />
-                                    <!--  カナ  -->
-                                    <TextBlock
-                                        Width="130"
-                                        Margin="5,12,5,5"
-                                        Text="{Binding Kana}" />
-                                    <TextBlock
-                                        Width="80"
-                                        Margin="5,12,5,5"
-                                        Text="{Binding StudentNumber}" />
-                                    <TextBlock
-                                        Width="30"
-                                        Margin="5,12,5,5"
-                                        Text="{Binding Year}" />
+                                    <!--  動的表示項目  -->
+                                    <ItemsControl ItemsSource="{Binding DisplayValues}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock
+                                                    Width="100"
+                                                    Margin="5,12,5,5"
+                                                    Text="{Binding}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    
                                     <!--  ラジオボタンのグループ  -->
                                     <StackPanel
                                         Margin="5"
@@ -465,17 +489,17 @@
                                         <RadioButton
                                             Checked="RadioButton_Checked"
                                             Content="参加済み"
-                                            GroupName="{Binding RoomNumber}"
+                                            GroupName="{Binding ExcelId}"
                                             IsChecked="{Binding IsRegistered}" />
                                         <RadioButton
                                             Checked="RadioButton_Checked"
                                             Content="未参加"
-                                            GroupName="{Binding RoomNumber}"
+                                            GroupName="{Binding ExcelId}"
                                             IsChecked="{Binding IsNotRegistered}" />
                                         <RadioButton
                                             Checked="RadioButton_Checked"
                                             Content="不参加"
-                                            GroupName="{Binding RoomNumber}"
+                                            GroupName="{Binding ExcelId}"
                                             IsChecked="{Binding IsAbsent}" />
                                     </StackPanel>
                                 </StackPanel>

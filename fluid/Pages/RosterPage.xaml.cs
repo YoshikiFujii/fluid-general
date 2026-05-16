@@ -47,7 +47,7 @@ namespace fluid_general.Pages
                     var mappings = dialog.Mappings.ToList();
 
                     // 名簿構成を保存
-                    await service.SaveRosterConfigAsync(new Models.RosterConfig 
+                    await service.UpdateRosterConfigAsync(new Models.RosterConfig 
                     { 
                         RosterName = rosterName, 
                         Mappings = mappings 

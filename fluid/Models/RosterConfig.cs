@@ -10,6 +10,9 @@ namespace fluid_general.Models
 
         // JSONとして保存されるマッピングリスト
         public List<ColumnMapping> Mappings { get; set; } = new List<ColumnMapping>();
+
+        // 表示対象のカスタムフィールドキー
+        public List<string> DisplayColumns { get; set; } = new List<string>();
     }
 
     public class ColumnMapping
