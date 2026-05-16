@@ -1,0 +1,129 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:anim="https://github.com/whistyun/AnimatedImage.Avalonia"
+        xmlns:pages="clr-namespace:fluid_general.Avalonia.Pages"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="720"
+        x:Class="fluid_general.Avalonia.Pages.EventWindow"
+        Title="Event Execution - Fluid"
+        WindowState="Maximized"
+        Background="#121212"
+        TransparencyLevelHint="AcrylicBlur">
+
+    <Window.Resources>
+        <DataTemplate x:Key="StatusColumnTemplate" x:DataType="pages:MemberVM">
+            <StackPanel Orientation="Horizontal" Spacing="20">
+                <RadioButton Content="参加済み" IsChecked="{Binding IsRegistered}" GroupName="{Binding Member.ExcelId}"/>
+                <RadioButton Content="未参加" IsChecked="{Binding IsNotRegistered}" GroupName="{Binding Member.ExcelId}"/>
+                <RadioButton Content="不参加" IsChecked="{Binding IsAbsent}" GroupName="{Binding Member.ExcelId}"/>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *">
+            <!-- Menu Bar -->
+            <Menu Grid.Row="0" Background="#22FFFFFF">
+                <MenuItem Header="ファイル">
+                    <MenuItem Header="エクスポート" />
+                    <MenuItem Header="インポート" />
+                    <Separator/>
+                    <MenuItem Header="終了" Click="OnCloseClick" />
+                </MenuItem>
+                <MenuItem Header="設定">
+                    <MenuItem Header="詳細設定" Click="OnDetailedSettingsClick" />
+                    <MenuItem Header="表示設定" Click="OnDisplaySettingsClick" />
+                </MenuItem>
+            </Menu>
+
+            <Grid Grid.Row="1" ColumnDefinitions="350, *">
+                <!-- Left Panel: Info & Stats -->
+                <Grid Grid.Column="0" RowDefinitions="Auto, Auto, *" Margin="20">
+                    <!-- Event Title -->
+                    <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,20">
+                        <TextBlock x:Name="EventTitleText" FontSize="32" FontWeight="Bold" Foreground="White" Text="イベント名"/>
+                        <TextBlock x:Name="EventDateText" FontSize="14" Foreground="LightGray" Text="2024/01/01"/>
+                    </StackPanel>
+
+                    <!-- Status Summary -->
+                    <Border Grid.Row="1" Background="#15FFFFFF" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="参加状況" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                            <Grid ColumnDefinitions="*, Auto">
+                                <TextBlock Text="全体" VerticalAlignment="Center" Foreground="LightGray"/>
+                                <TextBlock x:Name="WholeStatusText" Grid.Column="1" FontSize="24" FontWeight="Bold" Foreground="#0078D4" Text="0 / 0"/>
+                            </Grid>
+                            <ProgressBar x:Name="WholeProgressBar" Height="8" Minimum="0" Maximum="100" Value="0" CornerRadius="4"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- History Log -->
+                    <Border Grid.Row="2" Background="#15FFFFFF" CornerRadius="12" Padding="15">
+                        <Grid RowDefinitions="Auto, *">
+                            <TextBlock Grid.Row="0" Text="履歴" FontSize="18" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+                            <ListBox Grid.Row="1" x:Name="LogListBox" Background="Transparent" BorderThickness="0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontSize="12" Foreground="LightGray" Margin="0,2"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- Right Panel: Interaction & List -->
+                <Grid Grid.Column="1" RowDefinitions="*, *" Margin="0,20,20,20">
+                    <!-- Interaction Area (Certification) -->
+                    <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,0,20" x:Name="CertificationBorder">
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="15">
+                                <Image x:Name="StatusAnimation" Width="200" Height="200" anim:ImageBehavior.AnimatedSource="avares://fluid-general.Avalonia/Assets/waiting.gif" />
+                                <TextBlock x:Name="CertificationLabel" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="White" TextAlignment="Center"/>
+                                <TextBlock x:Name="CertificationLabel2" FontSize="16" HorizontalAlignment="Center" Foreground="LightGray" TextAlignment="Center"/>
+                            </StackPanel>
+                            
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20" Spacing="10">
+                                <Button x:Name="AddTerminalButton" Content="端末接続" Click="OnAddTerminalClick" Classes="accent"/>
+                                <Button x:Name="ShutdownButton" Content="終了" Click="OnShutdownTerminalClick" IsVisible="False"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Member List Area -->
+                    <Border Grid.Row="1" Background="#15FFFFFF" CornerRadius="12" Padding="15">
+                        <Grid RowDefinitions="Auto, *">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,10">
+                                <TextBlock Text="参加者リスト" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="White"/>
+                                <TextBox Grid.Column="1" x:Name="SearchBox" Margin="20,0" Watermark="名前・学籍番号で検索..." MaxWidth="300" HorizontalAlignment="Left" TextChanged="OnSearchTextChanged"/>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                                    <CheckBox Content="参加済み" IsChecked="True"/>
+                                    <CheckBox Content="未参加" IsChecked="True"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <DataGrid Grid.Row="1" x:Name="MemberGrid" 
+                                      Background="Transparent"
+                                      IsReadOnly="False"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      x:DataType="pages:MemberVM">
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Panel>
+</Window>

@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:pages="clr-namespace:fluid_general.Avalonia.Pages"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="fluid_general.Avalonia.Pages.ConnectPage">
+    
+    <ScrollViewer>
+        <StackPanel Spacing="30" Margin="20">
+            <!-- Current Status Card -->
+            <Border Background="#15FFFFFF" CornerRadius="12" Padding="25">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="現在の接続状態" FontSize="20" FontWeight="SemiBold" Foreground="White"/>
+                    <Grid ColumnDefinitions="Auto, *">
+                        <Ellipse x:Name="StatusDot" Width="12" Height="12" Fill="Gray" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <TextBlock x:Name="StatusTextBlock" Grid.Column="1" FontSize="16" Foreground="LightGray" Text="状態を確認中..."/>
+                    </Grid>
+                    
+                    <Border x:Name="RemoteUrlInfo" IsVisible="False" Background="#10000000" CornerRadius="8" Padding="15">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <PathIcon Data="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" Foreground="#0078D4" Width="16"/>
+                            <TextBlock x:Name="RemoteUrlText" Foreground="White" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Button x:Name="DisconnectButton" Content="接続解除（ローカルモードへ）" Click="OnDisconnectClick" 
+                            Background="#33FF0000" Foreground="White" HorizontalAlignment="Left" IsEnabled="False"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Manual Connection Card -->
+            <Border Background="#15FFFFFF" CornerRadius="12" Padding="25">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="手動で接続" FontSize="20" FontWeight="SemiBold" Foreground="White"/>
+                    <TextBlock Text="親機のIPアドレスまたはホスト名を入力して接続します。" FontSize="14" Foreground="Gray"/>
+                    
+                    <Grid ColumnDefinitions="*, Auto" MaxWidth="500" HorizontalAlignment="Left">
+                        <TextBox x:Name="ServerAddressTextBox" Watermark="例: http://192.168.1.10:5000" Height="40" VerticalContentAlignment="Center"/>
+                        <Button Grid.Column="1" Content="接続" Click="OnConnectClick" Classes="accent" Margin="10,0,0,0" Width="100" Height="40"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Network Discovery Card -->
+            <Border Background="#15FFFFFF" CornerRadius="12" Padding="25">
+                <StackPanel Spacing="20">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <StackPanel>
+                            <TextBlock Text="ネットワーク上の親機を探索" FontSize="20" FontWeight="SemiBold" Foreground="White"/>
+                            <TextBlock Text="同じネットワーク内で動作している親機を自動的に見つけます。" FontSize="14" Foreground="Gray" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" x:Name="SearchButton" Content="探索開始" Click="OnSearchClick" Width="120" Height="40"/>
+                    </Grid>
+
+                    <ProgressBar x:Name="SearchProgressBar" IsIndeterminate="True" IsVisible="False" Height="4"/>
+                    
+                    <ListBox x:Name="ParentListBox" Background="#10000000" MaxHeight="300" CornerRadius="8" SelectionChanged="OnParentSelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="pages:ParentInfo">
+                                <Border Padding="10">
+                                    <Grid ColumnDefinitions="Auto, *, Auto">
+                                        <PathIcon Data="M4,1H20A1,1 0 0,1 21,2V18A1,1 0 0,1 20,19H4A1,1 0 0,1 3,18V2A1,1 0 0,1 4,1M4,3V17H20V3H4M5,4H19V11H5V4M5,12H12V16H5V12M13,12H19V13H13V12M13,14H19V15H13V14M13,16H19V17H13V16M5,17H12V18H5V17Z" 
+                                                  Foreground="#0078D4" Width="24" Height="24" Margin="0,0,15,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White"/>
+                                            <TextBlock Text="{Binding Ip}" FontSize="12" Foreground="Gray"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="クリックして接続" FontSize="12" Foreground="#0078D4" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    
+                    <TextBlock x:Name="SearchStatusTextBlock" FontSize="14" Foreground="Gray" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

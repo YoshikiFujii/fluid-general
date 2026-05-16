@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:pages="clr-namespace:fluid_general.Avalonia.Pages"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="fluid_general.Avalonia.Pages.RosterPage">
+    <Grid RowDefinitions="Auto, Auto, *">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="登録済寮生名簿" FontSize="28" FontWeight="Bold" Foreground="White"/>
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <StackPanel Grid.Row="1" Spacing="10" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal" Spacing="15">
+                <Button x:Name="ImportButton" Content="名簿をインポート" Background="#0078D4" Foreground="White" Padding="15,8" CornerRadius="4" Click="ImportRoster_Click"/>
+                <Button Content="更新" Click="OnRefreshClick" Padding="15,8" CornerRadius="4"/>
+            </StackPanel>
+            <TextBlock Text="⚠️名簿はデータベースに保存されます。既存のExcelファイルからインポートできます。" 
+                       FontSize="12" Foreground="LightGray" Opacity="0.8"/>
+            <ProgressBar x:Name="ImportProgressBar" IsVisible="False" Height="4" Margin="0,5,0,0"/>
+        </StackPanel>
+
+        <!-- Roster List -->
+        <DataGrid Grid.Row="2" x:Name="RosterGrid"
+                  Background="#11FFFFFF"
+                  BorderThickness="1"
+                  BorderBrush="#22FFFFFF"
+                  CornerRadius="8"
+                  HeadersVisibility="Column"
+                  IsReadOnly="True"
+                  GridLinesVisibility="Horizontal"
+                  DoubleTapped="RosterGrid_DoubleTapped"
+                  x:DataType="pages:RosterPage+RosterInfo">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="名簿名" Binding="{Binding RosterName}" Width="*" />
+                <DataGridTextColumn Header="人数" Binding="{Binding TotalCount}" Width="100" />
+            </DataGrid.Columns>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="オプション" Click="RosterOptionClick"/>
+                    <Separator/>
+                    <MenuItem Header="削除" Click="DeleteSelectedItem" Foreground="Red"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+        </DataGrid>
+    </Grid>
+</UserControl>

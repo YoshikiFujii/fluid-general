@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="fluid_general.Avalonia.Pages.RosterDetailWindow"
+        Title="名簿詳細"
+        Width="900" Height="600"
+        WindowStartupLocation="CenterOwner"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
+    
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *" Margin="30">
+            <TextBlock x:Name="RosterNameTextBlock" Grid.Row="0" Text="名簿詳細" FontSize="24" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
+            
+            <DataGrid x:Name="MembersDataGrid"
+                      Grid.Row="1"
+                      Background="#11FFFFFF"
+                      BorderThickness="1"
+                      BorderBrush="#22FFFFFF"
+                      CornerRadius="8"
+                      AutoGenerateColumns="False"
+                      HeadersVisibility="Column"
+                      IsReadOnly="False"
+                      GridLinesVisibility="Horizontal">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="削除" Click="DeleteSelectedMember" Foreground="Red"/>
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
+            </DataGrid>
+        </Grid>
+    </Panel>
+</Window>

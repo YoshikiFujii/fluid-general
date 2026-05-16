@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.10.35122.118
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11806.211 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluid-general", "fluid\fluid-general.csproj", "{48339797-375B-44CE-87C9-8F34510F7B78}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "FluidSetup", "FluidSetup\FluidSetup.vdproj", "{E93B2DF2-77A1-2114-F7A7-0B987F7A1ABD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluid-general.Core", "fluid-general.Core\fluid-general.Core.csproj", "{01DBA528-DC69-4BB1-A268-397C704DEA64}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fluid-general.Avalonia", "fluid-general.Avalonia\fluid-general.Avalonia.csproj", "{CAAB2D58-0986-E21A-FB82-F7588581CF6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,18 @@ Global
 		{01DBA528-DC69-4BB1-A268-397C704DEA64}.Release|x64.Build.0 = Release|Any CPU
 		{01DBA528-DC69-4BB1-A268-397C704DEA64}.Release|x86.ActiveCfg = Release|Any CPU
 		{01DBA528-DC69-4BB1-A268-397C704DEA64}.Release|x86.Build.0 = Release|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Debug|x64.Build.0 = Debug|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Debug|x86.Build.0 = Debug|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Release|x64.ActiveCfg = Release|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Release|x64.Build.0 = Release|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Release|x86.ActiveCfg = Release|Any CPU
+		{CAAB2D58-0986-E21A-FB82-F7588581CF6C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

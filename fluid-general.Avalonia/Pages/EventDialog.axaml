@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="400"
+        x:Class="fluid_general.Avalonia.Pages.EventDialog"
+        Title="新しいイベントの作成"
+        Width="400" Height="450"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e1e"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+    
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *, Auto" Margin="30">
+            <TextBlock Grid.Row="0" Text="イベントの設定" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
+            
+            <StackPanel Grid.Row="1" Spacing="15">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="イベント名" Foreground="LightGray" FontSize="12"/>
+                    <TextBox x:Name="EventNameTextBox" Watermark="例: 寮祭2024" />
+                </StackPanel>
+
+                <StackPanel Spacing="5">
+                    <TextBlock Text="日程" Foreground="LightGray" FontSize="12"/>
+                    <CalendarDatePicker x:Name="EventDatePicker" HorizontalAlignment="Stretch" />
+                </StackPanel>
+
+                <StackPanel Spacing="5">
+                    <TextBlock Text="名簿を選択" Foreground="LightGray" FontSize="12"/>
+                    <ComboBox x:Name="RosterComboBox" HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </StackPanel>
+
+            <UniformGrid Grid.Row="2" Columns="2" Margin="0,20,0,0">
+                <Button Content="保存" Click="OnSaveClick" Background="#0078D4" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,5,0"/>
+                <Button Content="キャンセル" Click="OnCancelClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,0,0"/>
+            </UniformGrid>
+        </Grid>
+    </Panel>
+</Window>

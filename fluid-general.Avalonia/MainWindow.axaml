@@ -1,0 +1,117 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1010" d:DesignHeight="700"
+        x:Class="fluid_general.Avalonia.MainWindow"
+        Title="Fluid General"
+        Width="1010" Height="700"
+        WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <Panel>
+        <!-- Background Blur -->
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="#1a1a1a"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <SplitView IsPaneOpen="True"
+                   DisplayMode="Inline"
+                   OpenPaneLength="220"
+                   Background="Transparent"
+                   PaneBackground="#11FFFFFF">
+            <SplitView.Pane>
+                <DockPanel Margin="0,40,0,0">
+                    <!-- Navigation Menu -->
+                    <StackPanel DockPanel.Dock="Top" Spacing="5" Margin="10">
+                        <TextBlock Text="Fluid General" FontSize="18" FontWeight="Bold" Margin="10,0,0,20" Foreground="White"/>
+                        
+                        <ListBox x:Name="NaviList" Background="Transparent" BorderThickness="0" SelectionChanged="NaviList_SelectionChanged">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="12,10"/>
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                    <Setter Property="Margin" Value="5,2"/>
+                                </Style>
+                            </ListBox.Styles>
+                            
+                            <ListBoxItem Tag="Event">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <PathIcon Data="{StaticResource HomeIcon}" Foreground="White"/>
+                                    <TextBlock Text="イベント" VerticalAlignment="Center" Foreground="White"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                            
+                            <ListBoxItem Tag="Roster">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <PathIcon Data="{StaticResource PeopleIcon}" Foreground="White"/>
+                                    <TextBlock Text="名簿" VerticalAlignment="Center" Foreground="White"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                            
+                            <ListBoxItem Tag="Connect">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <PathIcon Data="{StaticResource LinkIcon}" Foreground="White"/>
+                                    <TextBlock Text="セッションに接続" VerticalAlignment="Center" Foreground="White"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+
+                    <!-- Footer Menu -->
+                    <StackPanel DockPanel.Dock="Bottom" Margin="10" Spacing="5">
+                        <Separator Background="#22FFFFFF" Margin="0,10"/>
+                        <ListBoxItem Padding="12,10">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{StaticResource SettingsIcon}" Foreground="Gray"/>
+                                <TextBlock Text="Settings" VerticalAlignment="Center" Foreground="Gray"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Padding="12,10">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <PathIcon Data="{StaticResource InfoIcon}" Foreground="Gray"/>
+                                <TextBlock Text="About" VerticalAlignment="Center" Foreground="Gray"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                    </StackPanel>
+                    
+                    <Panel /> <!-- Spacer -->
+                </DockPanel>
+            </SplitView.Pane>
+
+            <Grid RowDefinitions="Auto, *">
+                <!-- Header Area -->
+                <Panel Grid.Row="0" Height="40" Margin="0,0,0,0" IsHitTestVisible="False"/>
+                
+                <!-- Content Area -->
+                <Border Grid.Row="1" 
+                        Background="#11000000" 
+                        CornerRadius="12,0,0,0" 
+                        Margin="0,0,0,0"
+                        Padding="30">
+                    <Grid RowDefinitions="Auto, *">
+                        <TextBlock x:Name="PageHeader" Grid.Row="0" Text="イベント" FontSize="32" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
+                        <ContentControl x:Name="ContentFrame" Grid.Row="1" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </SplitView>
+    </Panel>
+    
+    <Window.Resources>
+        <!-- Simple Path Icons -->
+        <StreamGeometry x:Key="HomeIcon">M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z</StreamGeometry>
+        <StreamGeometry x:Key="PeopleIcon">M12,12c2.21,0,4-1.79,4-4s-1.79-4-4-4-4,1.79-4,4,1.79,4,4,4zm0,2c-2.67,0-8,1.34-8,4v2h16v-2c0-2.66-5.33-4-8-4z</StreamGeometry>
+        <StreamGeometry x:Key="LinkIcon">M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z</StreamGeometry>
+        <StreamGeometry x:Key="SettingsIcon">M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.81,11.69,4.81,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z</StreamGeometry>
+        <StreamGeometry x:Key="InfoIcon">M11,9H13V7H11V9M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z</StreamGeometry>
+    </Window.Resources>
+</Window>

@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:fluid_general.Models;assembly=fluid-general.Core"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
+        x:Class="fluid_general.Avalonia.Pages.RosterDialog"
+        Title="名簿の設定"
+        Width="500" Height="550"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e1e"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+    
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, Auto, *, Auto" Margin="30">
+            <TextBlock Grid.Row="0" Text="名簿の設定" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,0,0,20"/>
+            
+            <StackPanel Grid.Row="1" Spacing="5">
+                <TextBlock Text="名簿名" Foreground="LightGray" FontSize="12"/>
+                <TextBox x:Name="RosterNameTextBox" Margin="0,0,0,15" />
+                <TextBlock Text="各項目の列番号（1から開始）を指定してください" FontSize="12" Opacity="0.7" Foreground="LightGray"/>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="2" Margin="0,10">
+                <ItemsControl x:Name="ColumnMappingsItemsControl">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:ColumnMapping">
+                            <Grid ColumnDefinitions="*, Auto, 120, Auto" Margin="0,4">
+                                <TextBox Text="{Binding Label}" Margin="2" Watermark="項目名" />
+                                <TextBlock Grid.Column="1" Text="列目:" VerticalAlignment="Center" Margin="10,0" Foreground="White"/>
+                                <NumericUpDown Value="{Binding ColumnIndex, Mode=TwoWay}" Grid.Column="2" Minimum="1" Maximum="100" />
+                                <Button Grid.Column="3" Content="✕" Click="DeleteField_Click" CommandParameter="{Binding}" 
+                                        Background="Transparent" Foreground="Red" Margin="5,0,0,0" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="3" Spacing="15" Margin="0,10,0,0">
+                <Button Content="+ 項目を追加" Click="AddField_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Background="#33FFFFFF"/>
+                <UniformGrid Columns="2">
+                    <Button Content="保存" Click="OnSaveClick" Background="#0078D4" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,5,0"/>
+                    <Button Content="キャンセル" Click="OnCancelClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="5,0,0,0"/>
+                </UniformGrid>
+            </StackPanel>
+        </Grid>
+    </Panel>
+</Window>

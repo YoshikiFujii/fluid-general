@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+        x:Class="fluid_general.Avalonia.Pages.EventSettingsDialog"
+        Title="詳細設定"
+        Width="450" Height="350"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1E1E1E"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <StackPanel Margin="30" Spacing="20">
+            <TextBlock Text="イベント詳細設定" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,10,0,10"/>
+            
+            <StackPanel Spacing="10">
+                <TextBlock Text="タッチ音のテーマ" Foreground="LightGray"/>
+                <ComboBox x:Name="TouchSoundComboBox" HorizontalAlignment="Stretch">
+                    <ComboBoxItem Content="JR"/>
+                    <ComboBoxItem Content="JUGGLER"/>
+                </ComboBox>
+            </StackPanel>
+
+            <CheckBox x:Name="SameStudentErrorCheckBox" Content="同一学生証エラー音を有効にする" Foreground="White"/>
+            
+            <TextBlock Text="※設定は即座に反映されます。" FontSize="12" Foreground="Gray" Margin="0,10,0,0"/>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,20,0,0">
+                <Button Content="キャンセル" Click="OnCancelClick" Width="100"/>
+                <Button Content="適用" Click="OnApplyClick" Classes="accent" Width="100"/>
+            </StackPanel>
+        </StackPanel>
+    </Panel>
+</Window>

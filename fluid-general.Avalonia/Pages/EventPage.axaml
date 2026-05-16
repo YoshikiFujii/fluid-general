@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="clr-namespace:fluid_general.Models;assembly=fluid-general.Core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="fluid_general.Avalonia.Pages.EventPage">
+    <Grid RowDefinitions="Auto, Auto, *">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="追加された寮行事" FontSize="28" FontWeight="Bold" Foreground="White"/>
+        </StackPanel>
+
+        <!-- Toolbar -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="15" Margin="0,0,0,20">
+            <Button Content="新規作成" Click="OnNewEventClick" Background="#0078D4" Foreground="White" Padding="15,8" CornerRadius="4"/>
+            <TextBox PlaceholderText="イベントを検索" Width="300" VerticalAlignment="Center"/>
+            <Button Content="更新" Click="OnRefreshClick" Padding="15,8" CornerRadius="4"/>
+        </StackPanel>
+
+        <!-- Event List -->
+        <DataGrid Grid.Row="2" x:Name="EventGrid"
+                  Background="#11FFFFFF"
+                  BorderThickness="1"
+                  BorderBrush="#22FFFFFF"
+                  CornerRadius="8"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  HeadersVisibility="Column"
+                  IsReadOnly="True"
+                  GridLinesVisibility="Horizontal"
+                  DoubleTapped="OnEventDoubleTapped"
+                  x:DataType="models:EventConfig">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="イベント名" Binding="{Binding EventName}" Width="*" />
+                <DataGridTextColumn Header="日程" Binding="{Binding EventDate, StringFormat=\{0:yyyy/MM/dd\}}" Width="150" />
+                <DataGridTextColumn Header="名簿" Binding="{Binding RosterName}" Width="150" />
+                <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="120" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

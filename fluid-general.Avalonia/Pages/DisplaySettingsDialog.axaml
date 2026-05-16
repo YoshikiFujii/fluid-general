@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:pages="clr-namespace:fluid_general.Avalonia.Pages"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="500"
+        x:Class="fluid_general.Avalonia.Pages.DisplaySettingsDialog"
+        Title="表示項目の設定"
+        Width="400" Height="550"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1E1E1E"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *, Auto" Margin="30">
+            <TextBlock Grid.Row="0" Text="表示項目の選択と順序" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,10,0,20"/>
+            
+            <Grid Grid.Row="1" ColumnDefinitions="*, Auto">
+                <ListBox x:Name="FieldsListBox" Grid.Column="0" Background="#15FFFFFF" CornerRadius="8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="pages:FieldItem">
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" Foreground="White"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="10" VerticalAlignment="Top">
+                    <Button Content="↑" Click="OnMoveUpClick" Width="40" Height="40"/>
+                    <Button Content="↓" Click="OnMoveDownClick" Width="40" Height="40"/>
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,20,0,0">
+                <Button Content="キャンセル" Click="OnCancelClick" Width="100"/>
+                <Button Content="保存" Click="OnApplyClick" Classes="accent" Width="100"/>
+            </StackPanel>
+        </Grid>
+    </Panel>
+</Window>
