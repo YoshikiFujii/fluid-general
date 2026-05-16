@@ -235,6 +235,8 @@ namespace fluid_general
             // ModernWPF のテーマ変更イベントも登録
             ThemeManager.Current.ActualApplicationThemeChanged += OnThemeChanged;
 
+            // 探索用サーバーの起動
+            Services.DiscoveryService.StartServer();
         }
         private void OnThemeChanged(ThemeManager sender, object args)
         {
@@ -248,6 +250,7 @@ namespace fluid_general
                 await _host.StopAsync(TimeSpan.FromSeconds(5));
                 _host.Dispose();
             }
+            Services.DiscoveryService.StopServer();
             base.OnExit(e);
         }
 

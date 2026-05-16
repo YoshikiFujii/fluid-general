@@ -110,6 +110,8 @@ namespace fluid_general
         private System.Media.SoundPlayer player = null;
         private System.Windows.Threading.DispatcherTimer _syncTimer;
         private bool _isSyncing = false;
+        private int _syncFailureCount = 0;
+        private const int MaxSyncFailures = 3;
         SerialPort connectedPort = null;
         private bool AbsentErrorSettings = true;//欠席登録者が認証したときの設定 true:拒否 false:認証
         private SoundPlayer Sound1 = null;
@@ -1126,14 +1128,39 @@ namespace fluid_general
                     }
                 }
                 UpdateProgressBar();
+                _syncFailureCount = 0; // 成功したのでリセット
             }
             catch
             {
                 // 通信エラーなどはバックグラウンド同期なのでログ出力のみ
+                if (!string.IsNullOrEmpty(App.ServerBaseUrl))
+                {
+                    _syncFailureCount++;
+                    if (_syncFailureCount >= MaxSyncFailures)
+                    {
+                        Dispatcher.Invoke(() => HandleAutoDisconnect());
+                    }
+                }
             }
             finally
             {
                 _isSyncing = false;
+            }
+        }
+
+        private void HandleAutoDisconnect()
+        {
+            _syncTimer?.Stop();
+            App.ServerBaseUrl = null;
+            MessageBox.Show("親機との接続が切れました。親機モード（ローカル接続）に切り替えます。", "接続エラー", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+            // ローカルデータで画面を更新
+            _ = RefreshRosterListAsync();
+
+            // メインウィンドウのタイトルを更新
+            if (Application.Current.MainWindow is MainWindow mw)
+            {
+                mw.UpdateTitle();
             }
         }
 

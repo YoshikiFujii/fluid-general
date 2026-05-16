@@ -102,5 +102,36 @@ namespace fluid_general.Pages
                 mainWindow.UpdateTitle();
             }
         }
+        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            SearchButton.IsEnabled = false;
+            SearchStatusTextBlock.Text = "親機を探索中...";
+            ParentListBox.Items.Clear();
+
+            var parents = await Services.DiscoveryService.DiscoverParentsAsync();
+
+            if (parents.Count == 0)
+            {
+                SearchStatusTextBlock.Text = "親機は見つかりませんでした。";
+            }
+            else
+            {
+                foreach (var ip in parents)
+                {
+                    ParentListBox.Items.Add(ip);
+                }
+                SearchStatusTextBlock.Text = $"{parents.Count} 台の親機が見つかりました。";
+            }
+
+            SearchButton.IsEnabled = true;
+        }
+
+        private void ParentListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ParentListBox.SelectedItem is string ip)
+            {
+                ServerAddressTextBox.Text = $"http://{ip}:5000/";
+            }
+        }
     }
 }
