@@ -31,11 +31,14 @@
     <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
     
     <!-- EF Core SQLite -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\fluid-general.Core\fluid-general.Core.csproj" />
   </ItemGroup>
 
   <!-- ASP.NET Core framework reference for Web API hosting -->

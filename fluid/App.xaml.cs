@@ -53,18 +53,17 @@ namespace fluid_general
         }
         
         // 接続先URLの変更通知
-        public static event EventHandler? ConnectionModeChanged;
+        public static event EventHandler? ConnectionModeChanged
+        {
+            add => fluid_general.Utils.AppEnv.ConnectionModeChanged += value;
+            remove => fluid_general.Utils.AppEnv.ConnectionModeChanged -= value;
+        }
 
         // 子機モード（他PCのセッションに接続）として動作する場合のベースURL
         public static string? ServerBaseUrl 
         { 
-            get => fluid_general.Properties.Settings.Default.ServerBaseUrl;
-            set 
-            {
-                fluid_general.Properties.Settings.Default.ServerBaseUrl = value;
-                fluid_general.Properties.Settings.Default.Save();
-                ConnectionModeChanged?.Invoke(null, EventArgs.Empty);
-            }
+            get => fluid_general.Utils.AppEnv.ServerBaseUrl;
+            set => fluid_general.Utils.AppEnv.ServerBaseUrl = value;
         }
 
         public static Services.IDataService GetDataService()
@@ -368,18 +367,7 @@ namespace fluid_general
 
         }
         // AppData内のアプリ専用フォルダへのパスを取得
-        public static string AppDataPath
-        {
-            get
-            {
-                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "fluid-general");
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-                return path;
-            }
-        }
+        public static string AppDataPath => fluid_general.Utils.AppEnv.AppDataPath;
 
         // アプリケーション内での未処理例外をキャッチ
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -400,25 +388,7 @@ namespace fluid_general
         // エラーログをファイルに書き出すメソッド
         public static void LogError(Exception ex)
         {
-            try
-            {
-                // AppData内にログを出力するように変更
-                string logFilePath = Path.Combine(AppDataPath, "error.log");
-
-                // ログを追記モードで書き込む
-                using (StreamWriter writer = new StreamWriter(logFilePath, true))
-                {
-                    writer.WriteLine("日時: " + DateTime.Now);
-                    writer.WriteLine("メッセージ: " + ex.Message);
-                    writer.WriteLine("スタックトレース: " + ex.StackTrace);
-                    writer.WriteLine("------------------------------------------------------");
-                }
-            }
-            catch (Exception loggingEx)
-            {
-                // ログ書き込み中にエラーが発生した場合、標準出力にエラーメッセージを出力
-                Console.WriteLine("エラーログの書き込みに失敗しました: " + loggingEx.Message);
-            }
+            fluid_general.Utils.AppEnv.LogError(ex);
         }
 
         public static async Task VerifyRemoteConnectionAsync()

@@ -151,7 +151,7 @@ namespace fluid_general.Services
             catch (Exception ex)
             {
                 var inner = ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : "";
-                App.LogError(new Exception($"CheckInAsync Error: {ex.Message}{inner}", ex));
+                fluid_general.Utils.AppEnv.LogError(new Exception($"CheckInAsync Error: {ex.Message}{inner}", ex));
                 throw;
             }
             return log;
@@ -188,7 +188,7 @@ namespace fluid_general.Services
             catch (Exception ex)
             {
                 var inner = ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : "";
-                App.LogError(new Exception($"UpdateCheckInStatusAsync Error: {ex.Message}{inner}", ex));
+                fluid_general.Utils.AppEnv.LogError(new Exception($"UpdateCheckInStatusAsync Error: {ex.Message}{inner}", ex));
                 throw;
             }
         }

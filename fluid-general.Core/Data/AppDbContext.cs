@@ -18,7 +18,7 @@ namespace fluid_general.Data
             if (!optionsBuilder.IsConfigured)
             {
                 // アプリのデータフォルダにデータベースを作成
-                var dbPath = Path.Combine(App.AppDataPath, "fluid_general.db");
+                var dbPath = Path.Combine(fluid_general.Utils.AppEnv.AppDataPath, "fluid_general.db");
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
             }
         }
