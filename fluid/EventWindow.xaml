@@ -449,6 +449,19 @@
                         </StackPanel>
                     </Border>
 
+                    <TextBlock
+                        x:Name="RosterErrorMessageTextBlock"
+                        Grid.Row="1"
+                        Grid.ColumnSpan="4"
+                        Margin="40"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        FontSize="16"
+                        Foreground="Red"
+                        Text="名簿の読み込みに失敗しました"
+                        TextWrapping="Wrap"
+                        Visibility="Collapsed" />
+
                     <ui:ListView
                         x:Name="RosterListView"
                         Grid.Row="1"

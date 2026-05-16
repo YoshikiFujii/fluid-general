@@ -41,6 +41,16 @@
                 Text="イベントがありません"
                 Visibility="Collapsed" />
             <TextBlock
+                x:Name="ErrorMessageTextBlock"
+                Grid.Row="3"
+                Margin="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="16"
+                Foreground="Red"
+                Text="イベントの読み込みに失敗しました"
+                Visibility="Collapsed" />
+            <TextBlock
                 x:Name="text_event"
                 Grid.Row="0"
                 HorizontalAlignment="Left"

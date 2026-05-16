@@ -59,12 +59,17 @@ namespace fluid_general.Pages
         {
             if (Events.Count == 0)
             {
-                EmptyMessageTextBlock.Visibility = Visibility.Visible;
+                // エラー表示が出ていない場合のみ「イベントがありません」を出す
+                if (ErrorMessageTextBlock.Visibility != Visibility.Visible)
+                {
+                    EmptyMessageTextBlock.Visibility = Visibility.Visible;
+                }
                 EventList.Visibility = Visibility.Collapsed;
             }
             else
             {
                 EmptyMessageTextBlock.Visibility = Visibility.Collapsed;
+                ErrorMessageTextBlock.Visibility = Visibility.Collapsed;
                 EventList.Visibility = Visibility.Visible;
             }
         }
@@ -73,6 +78,7 @@ namespace fluid_general.Pages
         {
             try
             {
+                ErrorMessageTextBlock.Visibility = Visibility.Collapsed;
                 var service = fluid_general.App.GetDataService();
                 var dbEvents = await service.GetEventsAsync();
                 
@@ -84,7 +90,13 @@ namespace fluid_general.Pages
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"イベントの読み込みに失敗しました: {ex.Message}");
+                App.LogError(ex);
+                // 通信エラーの場合はインラインで表示
+                Events.Clear();
+                ErrorMessageTextBlock.Text = $"イベントの読み込みに失敗しました: {ex.Message}";
+                ErrorMessageTextBlock.Visibility = Visibility.Visible;
+                EmptyMessageTextBlock.Visibility = Visibility.Collapsed;
+                EventList.Visibility = Visibility.Collapsed;
             }
         }
 

@@ -1175,8 +1175,9 @@ namespace fluid_general
             {
                 this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
                 
-                // 子機モードはデフォルトの色（または青系）
-                ModernWpf.Controls.TitleBar.SetBackground(this, null); // nullでデフォルトに戻る
+                // 子機モードは薄い青色
+                var childBrush = new SolidColorBrush(Color.FromRgb(230, 242, 255));
+                ModernWpf.Controls.TitleBar.SetBackground(this, childBrush);
             }
 
             // タイトルバー以外（メニューバー右端）のUIも更新
@@ -1207,6 +1208,7 @@ namespace fluid_general
         {
             try
             {
+                RosterErrorMessageTextBlock.Visibility = Visibility.Collapsed;
                 var service = App.GetDataService();
                 var members = await service.GetMembersByRosterAsync(_currentEventConfig.RosterName);
                 var logs = await service.GetCheckInLogsAsync(_currentEventConfig.Id);
@@ -1273,9 +1275,14 @@ namespace fluid_general
                 App.LogError(ex);
                 // 通信エラー（HttpRequestException等）の場合は、Appのウォッチドッグが切断処理を行うため
                 // ここではユーザーにメッセージボックスを出さないようにする。
+                // 代わりに名簿エリアにエラーメッセージを表示する。
+                RosterListView.Visibility = Visibility.Collapsed;
+                RosterErrorMessageTextBlock.Text = $"名簿の読み込みに失敗しました: {ex.Message}";
+                RosterErrorMessageTextBlock.Visibility = Visibility.Visible;
+                
                 if (!(ex is System.Net.Http.HttpRequestException || ex is System.Threading.Tasks.TaskCanceledException))
                 {
-                    MessageBox.Show($"リストの更新中にエラーが発生しました: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // 致命的なエラー（ネットワーク以外）の場合はログ出力なども検討
                 }
             }
         }

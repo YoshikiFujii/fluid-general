@@ -57,8 +57,9 @@ namespace fluid_general
             {
                 this.Title = $"{baseTitle} - 子機モード (接続先: {App.ServerBaseUrl})";
                 
-                // 子機モードはデフォルトの色
-                ModernWpf.Controls.TitleBar.SetBackground(this, null);
+                // 子機モードは薄い青色
+                var childBrush = new SolidColorBrush(Color.FromRgb(230, 242, 255));
+                ModernWpf.Controls.TitleBar.SetBackground(this, childBrush);
             }
         }
 
