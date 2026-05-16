@@ -4,6 +4,7 @@ using System.Windows;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
+using fluid_general.Models;
 
 namespace fluid_general.Pages
 {
@@ -22,6 +23,7 @@ namespace fluid_general.Pages
             {
                 Mappings = new ObservableCollection<ColumnMapping>
                 {
+                    new ColumnMapping { Label = "ID", ColumnIndex = 1, IsFixed = true },
                     new ColumnMapping { Label = "名前", ColumnIndex = 6, IsFixed = true },
                     new ColumnMapping { Label = "名前（かな）", ColumnIndex = 7 },
                     new ColumnMapping { Label = "部屋番号", ColumnIndex = 1 },
@@ -75,12 +77,5 @@ namespace fluid_general.Pages
 
             rostername = RosterNameTextBox.Text;
         }
-    }
-
-    public class ColumnMapping
-    {
-        public string Label { get; set; } = string.Empty;
-        public int ColumnIndex { get; set; } = 1;
-        public bool IsFixed { get; set; } = false;
     }
 }

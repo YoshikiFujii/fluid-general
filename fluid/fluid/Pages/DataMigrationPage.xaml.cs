@@ -82,6 +82,7 @@ namespace fluid_general.Pages
                         TouchSound = eventDoc.Root?.Element("TouchSound")?.Value ?? "JR",
                         SameStudentSetting = (eventDoc.Root?.Element("SameStudentSetting")?.Value ?? "true") == "true",
                         Status = "完了", // 古いデータなので完了扱いとする
+                        RosterName = "Migrated_" + eventName // 移行用名簿名を付与
                     };
 
                     // API経由またはローカルで作成
@@ -105,6 +106,8 @@ namespace fluid_general.Pages
                                 StudentNumber = studentNumber,
                                 Name = entry.Element("Name")?.Value ?? "名前なし",
                                 Kana = entry.Element("Kana")?.Value ?? "",
+                                RosterName = evConfig.RosterName,
+                                ExcelId = entryCount
                             };
                             
                             // CustomFieldsに旧XMLの付加情報を詰める
@@ -118,7 +121,7 @@ namespace fluid_general.Pages
 
                         // 全員分のチェックインログ（ステータス記録）を作成し、イベントに紐付ける
                         string status = entry.Element("Status")?.Value ?? "未参加";
-                        await service.UpdateCheckInStatusAsync(studentNumber, createdEvent.Id, status);
+                        await service.UpdateCheckInStatusAsync(member.RosterName, member.ExcelId, createdEvent.Id, status);
                     }
 
                     LogTextBox.Text += $"完了 (イベントID: {createdEvent.Id}, 追加された名簿: {entryCount}名)\n";

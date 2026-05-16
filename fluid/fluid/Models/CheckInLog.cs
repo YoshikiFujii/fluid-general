@@ -9,7 +9,10 @@ namespace fluid_general.Models
         public int EventConfigId { get; set; }
         public EventConfig EventConfig { get; set; } = null!;
 
-        public int MemberId { get; set; }
+        // 名簿名とエクセル内IDでメンバーを特定する
+        public string RosterName { get; set; } = string.Empty;
+        public int ExcelId { get; set; }
+        
         public Member Member { get; set; } = null!;
 
         // 状態 (例: "参加済み", "未参加", "欠席")

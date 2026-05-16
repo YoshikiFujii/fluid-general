@@ -70,6 +70,7 @@ namespace fluid_general
                     {
                         services.AddControllers();
                         services.AddDbContext<AppDbContext>();
+                        services.AddTransient<Services.IDataService, Services.LocalDataService>();
                     });
                     // ポート5000で待ち受け（必要に応じて設定から読み込む形に変更可）
                     webBuilder.UseUrls("http://0.0.0.0:5000"); 
@@ -99,20 +100,97 @@ namespace fluid_general
                         if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
                         using (var cmd = conn.CreateCommand())
                         {
+                            // RosterConfigsテーブルが存在しない場合の簡易作成
+                            cmd.CommandText = "CREATE TABLE IF NOT EXISTS RosterConfigs (RosterName TEXT PRIMARY KEY, Mappings TEXT);";
+                            await cmd.ExecuteNonQueryAsync();
+
+                            // Members テーブルの再構築（Id カラムの削除・主キーの変更のため）
                             cmd.CommandText = "PRAGMA table_info(Members);";
-                            bool exists = false;
+                            bool hasMemberIdColumn = false;
                             using (var reader = await cmd.ExecuteReaderAsync())
                             {
                                 while (await reader.ReadAsync())
                                 {
-                                    if (reader["name"].ToString() == "RosterName") { exists = true; break; }
+                                    if (reader["name"].ToString() == "Id") hasMemberIdColumn = true;
                                 }
                             }
-                            if (!exists)
+
+                            if (hasMemberIdColumn)
                             {
-                                cmd.CommandText = "ALTER TABLE Members ADD COLUMN RosterName TEXT DEFAULT '';";
+                                cmd.CommandText = @"
+                                    CREATE TABLE Members_new (
+                                        RosterName TEXT NOT NULL,
+                                        ExcelId INTEGER NOT NULL,
+                                        StudentNumber TEXT DEFAULT '',
+                                        Name TEXT DEFAULT '',
+                                        Kana TEXT DEFAULT '',
+                                        CustomFields TEXT,
+                                        PRIMARY KEY (RosterName, ExcelId)
+                                    );
+                                    INSERT INTO Members_new (RosterName, ExcelId, StudentNumber, Name, Kana, CustomFields)
+                                    SELECT RosterName, ExcelId, StudentNumber, Name, Kana, CustomFields FROM Members;
+                                    DROP TABLE Members;
+                                    ALTER TABLE Members_new RENAME TO Members;";
                                 await cmd.ExecuteNonQueryAsync();
                             }
+
+                            cmd.CommandText = "CREATE INDEX IF NOT EXISTS IX_CheckInLogs_EventConfigId ON CheckInLogs (EventConfigId);";
+                            await cmd.ExecuteNonQueryAsync();
+
+                            // CheckInLogs テーブルの再構築（MemberId カラムの削除・制約解除のため）
+                            cmd.CommandText = "PRAGMA table_info(CheckInLogs);";
+                            bool hasMemberId = false;
+                            using (var reader = await cmd.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    if (reader["name"].ToString() == "MemberId") hasMemberId = true;
+                                }
+                            }
+
+                            if (hasMemberId)
+                            {
+                                // 既存データを一時退避し、テーブルを再作成する
+                                // (SQLiteは ALTER COLUMN や DROP COLUMN が制限されているため)
+                                cmd.CommandText = @"
+                                    CREATE TABLE CheckInLogs_new (
+                                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        EventConfigId INTEGER NOT NULL,
+                                        RosterName TEXT DEFAULT '',
+                                        ExcelId INTEGER DEFAULT 0,
+                                        Status TEXT DEFAULT '未参加',
+                                        UpdatedAt TEXT
+                                    );
+                                    INSERT INTO CheckInLogs_new (Id, EventConfigId, RosterName, ExcelId, Status, UpdatedAt)
+                                    SELECT 
+                                        l.Id, 
+                                        l.EventConfigId, 
+                                        COALESCE(NULLIF(l.RosterName, ''), m.RosterName, ''),
+                                        CASE WHEN l.ExcelId > 0 THEN l.ExcelId ELSE IFNULL(m.ExcelId, 0) END,
+                                        l.Status, 
+                                        l.UpdatedAt 
+                                    FROM CheckInLogs l
+                                    LEFT JOIN Members m ON l.MemberId = m.Id;
+                                    DROP TABLE CheckInLogs;
+                                    ALTER TABLE CheckInLogs_new RENAME TO CheckInLogs;";
+                                await cmd.ExecuteNonQueryAsync();
+                            }
+
+                            // 重複データのクリーンアップ (ユニークインデックス作成の邪魔になるため)
+                            cmd.CommandText = @"
+                                DELETE FROM CheckInLogs 
+                                WHERE Id NOT IN (
+                                    SELECT MAX(Id) 
+                                    FROM CheckInLogs 
+                                    GROUP BY EventConfigId, RosterName, ExcelId
+                                );";
+                            await cmd.ExecuteNonQueryAsync();
+
+                            cmd.CommandText = "CREATE INDEX IF NOT EXISTS IX_CheckInLogs_RosterName_ExcelId ON CheckInLogs (RosterName, ExcelId);";
+                            await cmd.ExecuteNonQueryAsync();
+
+                            cmd.CommandText = "CREATE UNIQUE INDEX IF NOT EXISTS IX_CheckInLogs_EventConfigId_RosterName_ExcelId ON CheckInLogs (EventConfigId, RosterName, ExcelId);";
+                            await cmd.ExecuteNonQueryAsync();
                         }
                     }
                     catch (Exception ex)

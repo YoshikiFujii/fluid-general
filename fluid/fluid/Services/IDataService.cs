@@ -22,8 +22,12 @@ namespace fluid_general.Services
         Task DeleteMemberAsync(string studentNumber);
 
         // チェックイン（認証）関連
-        Task<CheckInLog?> CheckInAsync(string studentNumber, int eventId);
-        Task UpdateCheckInStatusAsync(string studentNumber, int eventId, string status);
+        Task<CheckInLog?> CheckInAsync(string rosterName, int excelId, int eventId);
+        Task UpdateCheckInStatusAsync(string rosterName, int excelId, int eventId, string status);
         Task<List<CheckInLog>> GetCheckInLogsAsync(int eventId);
+        
+        // 名簿構成（マッピング）関連
+        Task<RosterConfig?> GetRosterConfigAsync(string rosterName);
+        Task SaveRosterConfigAsync(RosterConfig config);
     }
 }

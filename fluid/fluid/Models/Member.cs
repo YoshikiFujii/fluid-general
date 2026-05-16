@@ -4,7 +4,8 @@ namespace fluid_general.Models
 {
     public class Member
     {
-        public int Id { get; set; }
+        // 名簿内の識別子 (エクセル上の1,2,3...を保持)
+        public int ExcelId { get; set; }
         
         // 基本項目
         public string StudentNumber { get; set; } = string.Empty; // 学籍番号・社員番号など

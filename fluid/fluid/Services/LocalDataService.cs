@@ -73,7 +73,25 @@ namespace fluid_general.Services
         public async Task<Member> CreateMemberAsync(Member member)
         {
             using var db = GetContext();
-            db.Members.Add(member);
+            
+            // 名簿名とエクセル内IDで既存データを検索
+            var existing = await db.Members
+                .FirstOrDefaultAsync(m => m.RosterName == member.RosterName && m.ExcelId == member.ExcelId);
+
+            if (existing == null)
+            {
+                db.Members.Add(member);
+            }
+            else
+            {
+                // 既存のデータを更新 (Idは変更しない)
+                existing.StudentNumber = member.StudentNumber;
+                existing.Name = member.Name;
+                existing.Kana = member.Kana;
+                existing.CustomFields = member.CustomFields;
+                db.Members.Update(existing);
+            }
+            
             await db.SaveChangesAsync();
             return member;
         }
@@ -81,8 +99,14 @@ namespace fluid_general.Services
         public async Task UpdateMemberAsync(Member member)
         {
             using var db = GetContext();
-            db.Members.Update(member);
-            await db.SaveChangesAsync();
+            var existing = await db.Members
+                .FirstOrDefaultAsync(m => m.RosterName == member.RosterName && m.ExcelId == member.ExcelId);
+            
+            if (existing != null)
+            {
+                db.Entry(existing).CurrentValues.SetValues(member);
+                await db.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteMemberAsync(string studentNumber)
@@ -96,28 +120,55 @@ namespace fluid_general.Services
             }
         }
 
-        public async Task<CheckInLog?> CheckInAsync(string studentNumber, int eventId)
-        {
-            return await SetCheckInStatusAsync(studentNumber, eventId, "参加済み");
-        }
-
-        public async Task UpdateCheckInStatusAsync(string studentNumber, int eventId, string status)
-        {
-            await SetCheckInStatusAsync(studentNumber, eventId, status);
-        }
-
-        private async Task<CheckInLog?> SetCheckInStatusAsync(string studentNumber, int eventId, string status)
+        public async Task<CheckInLog?> CheckInAsync(string rosterName, int excelId, int eventId)
         {
             using var db = GetContext();
-            var member = await db.Members.FirstOrDefaultAsync(m => m.StudentNumber == studentNumber);
-            if (member == null) return null;
-
-            var log = await db.CheckInLogs.FirstOrDefaultAsync(l => l.MemberId == member.Id && l.EventConfigId == eventId);
+            var log = await db.CheckInLogs
+                .FirstOrDefaultAsync(l => l.RosterName == rosterName && l.ExcelId == excelId && l.EventConfigId == eventId);
+            
             if (log == null)
             {
                 log = new CheckInLog
                 {
-                    MemberId = member.Id,
+                    RosterName = rosterName,
+                    ExcelId = excelId,
+                    EventConfigId = eventId,
+                    Status = "参加済み",
+                    UpdatedAt = DateTime.Now
+                };
+                db.CheckInLogs.Add(log);
+            }
+            else
+            {
+                log.Status = "参加済み";
+                log.UpdatedAt = DateTime.Now;
+            }
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : "";
+                App.LogError(new Exception($"CheckInAsync Error: {ex.Message}{inner}", ex));
+                throw;
+            }
+            return log;
+        }
+
+        public async Task UpdateCheckInStatusAsync(string rosterName, int excelId, int eventId, string status)
+        {
+            using var db = GetContext();
+            var log = await db.CheckInLogs
+                .FirstOrDefaultAsync(l => l.RosterName == rosterName && l.ExcelId == excelId && l.EventConfigId == eventId);
+
+            if (log == null)
+            {
+                log = new CheckInLog
+                {
+                    RosterName = rosterName,
+                    ExcelId = excelId,
                     EventConfigId = eventId,
                     Status = status,
                     UpdatedAt = DateTime.Now
@@ -129,8 +180,17 @@ namespace fluid_general.Services
                 log.Status = status;
                 log.UpdatedAt = DateTime.Now;
             }
-            await db.SaveChangesAsync();
-            return log;
+
+            try
+            {
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : "";
+                App.LogError(new Exception($"UpdateCheckInStatusAsync Error: {ex.Message}{inner}", ex));
+                throw;
+            }
         }
 
         public async Task<List<CheckInLog>> GetCheckInLogsAsync(int eventId)
@@ -140,6 +200,28 @@ namespace fluid_general.Services
                 .Include(l => l.Member)
                 .Where(l => l.EventConfigId == eventId)
                 .ToListAsync();
+        }
+        
+        public async Task<RosterConfig?> GetRosterConfigAsync(string rosterName)
+        {
+            using var db = GetContext();
+            return await db.RosterConfigs.FindAsync(rosterName);
+        }
+
+        public async Task SaveRosterConfigAsync(RosterConfig config)
+        {
+            using var db = GetContext();
+            var existing = await db.RosterConfigs.FindAsync(config.RosterName);
+            if (existing == null)
+            {
+                db.RosterConfigs.Add(config);
+            }
+            else
+            {
+                existing.Mappings = config.Mappings;
+                db.RosterConfigs.Update(existing);
+            }
+            await db.SaveChangesAsync();
         }
     }
 }

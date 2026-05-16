@@ -86,7 +86,7 @@ namespace fluid_general.Services
 
         public async Task UpdateMemberAsync(Member member)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/members/{member.Id}", member);
+            var response = await _httpClient.PutAsJsonAsync($"api/members/{Uri.EscapeDataString(member.RosterName)}/{member.ExcelId}", member);
             response.EnsureSuccessStatusCode();
         }
 
@@ -96,29 +96,43 @@ namespace fluid_general.Services
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<CheckInLog?> CheckInAsync(string studentNumber, int eventId)
+        public async Task<CheckInLog?> CheckInAsync(string rosterName, int excelId, int eventId)
         {
-            var request = new { StudentNumber = studentNumber, EventId = eventId };
-            var response = await _httpClient.PostAsJsonAsync("api/members/checkin", request);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<CheckInResponse>();
-                return result?.Log;
-            }
-            return null;
+            var response = await _httpClient.PostAsJsonAsync("api/members/checkin", new { RosterName = rosterName, ExcelId = excelId, EventId = eventId });
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadFromJsonAsync<CheckInResponse>();
+            return result?.Log;
         }
 
-        public async Task UpdateCheckInStatusAsync(string studentNumber, int eventId, string status)
+        public async Task UpdateCheckInStatusAsync(string rosterName, int excelId, int eventId, string status)
         {
-            var request = new { StudentNumber = studentNumber, EventId = eventId, Status = status };
-            await _httpClient.PostAsJsonAsync("api/members/status", request);
+            var response = await _httpClient.PostAsJsonAsync("api/members/status", new { RosterName = rosterName, ExcelId = excelId, EventId = eventId, Status = status });
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task<List<CheckInLog>> GetCheckInLogsAsync(int eventId)
         {
             var result = await _httpClient.GetFromJsonAsync<List<CheckInLog>>($"api/events/{eventId}/logs");
             return result ?? new List<CheckInLog>();
+        }
+
+        public async Task<RosterConfig?> GetRosterConfigAsync(string rosterName)
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<RosterConfig>($"api/rosterconfigs/{Uri.EscapeDataString(rosterName)}");
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+        }
+
+        public async Task SaveRosterConfigAsync(RosterConfig config)
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/rosterconfigs", config);
+            response.EnsureSuccessStatusCode();
         }
     }
 

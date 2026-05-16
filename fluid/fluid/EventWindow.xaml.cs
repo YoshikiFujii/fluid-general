@@ -28,6 +28,7 @@ namespace fluid_general
 
     public class RosterItem : INotifyPropertyChanged
     {
+        public int ExcelId { get; set; }
         public string RoomNumber { get; set; }
         public string Name { get; set; }
         public string Kana { get; set; }
@@ -580,8 +581,10 @@ namespace fluid_general
             {
                 studentNumber = studentNumber.Substring(0, studentNumber.Length - 2);
             }
-            // 受け取った学籍番号に一致する生徒をRosterItemsから検索
-            var student = RosterItems.FirstOrDefault(item => item.StudentNumber == studentNumber);
+            // 受け取った学籍番号またはエクセルIDに一致する生徒をRosterItemsから検索
+            var student = RosterItems.FirstOrDefault(item => 
+                item.StudentNumber == studentNumber || 
+                item.ExcelId.ToString() == studentNumber);
 
             if (student != null)
             {
@@ -848,7 +851,7 @@ namespace fluid_general
                 if (rosterItem.IsRegistered) status = "参加済み";
                 else if (rosterItem.IsAbsent) status = "不参加";
 
-                await service.UpdateCheckInStatusAsync(rosterItem.StudentNumber, _currentEventConfig.Id, status);
+                await service.UpdateCheckInStatusAsync(_currentEventConfig.RosterName, rosterItem.ExcelId, _currentEventConfig.Id, status);
             }
             catch (Exception ex)
             {
@@ -1118,20 +1121,21 @@ namespace fluid_general
                 var service = App.GetDataService();
                 var members = await service.GetMembersByRosterAsync(_currentEventConfig.RosterName);
                 var logs = await service.GetCheckInLogsAsync(_currentEventConfig.Id);
-
+ 
                 RosterItems.Clear();
                 if (members.Count == 0)
                 {
                     LogList.AppendText($"[{DateTime.Now:HH:mm:ss}] [警告] 名簿 '{_currentEventConfig.RosterName}' にメンバーが登録されていません。\n");
                 }
-
+ 
                 foreach (var member in members)
                 {
-                    var log = logs.FirstOrDefault(l => l.MemberId == member.Id);
+                    var log = logs.FirstOrDefault(l => l.RosterName == member.RosterName && l.ExcelId == member.ExcelId);
                     string status = log?.Status ?? "未参加";
-
+ 
                     RosterItems.Add(new RosterItem
                     {
+                        ExcelId = member.ExcelId,
                         RoomNumber = member.CustomFields.ContainsKey("RoomNumber") ? member.CustomFields["RoomNumber"] : "",
                         Name = member.Name,
                         Kana = member.Kana,

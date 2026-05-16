@@ -90,7 +90,7 @@ namespace fluid_general.Pages
 
                         if (member != null)
                         {
-                            await service.UpdateCheckInStatusAsync(member.StudentNumber, eventConfig.Id, status);
+                            await service.UpdateCheckInStatusAsync(member.RosterName, member.ExcelId, eventConfig.Id, status);
                             registeredList.Add($"{member.Name} ({member.StudentNumber})");
                         }
                         else
@@ -179,7 +179,7 @@ namespace fluid_general.Pages
 
                         if (member != null)
                         {
-                            await service.UpdateCheckInStatusAsync(member.StudentNumber, eventConfig.Id, "参加済み");
+                            await service.UpdateCheckInStatusAsync(member.RosterName, member.ExcelId, eventConfig.Id, "参加済み");
                             importedCount++;
                         }
                         else

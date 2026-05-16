@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using fluid_general.Models;
 
 namespace fluid_general.Pages
 {
@@ -33,14 +34,24 @@ namespace fluid_general.Pages
                 {
                     string selectedFilePath = openFileDialog.FileName;
                     string initialRosterName = System.IO.Path.GetFileNameWithoutExtension(selectedFilePath);
-                    var dialog = new RosterDialog(initialRosterName);
+                    
+                    var service = App.GetDataService();
+                    var existingConfig = await service.GetRosterConfigAsync(initialRosterName);
+                    
+                    var dialog = new RosterDialog(initialRosterName, existingConfig?.Mappings);
                     var result = await dialog.ShowAsync();
 
                     if (result != ContentDialogResult.Primary) return;
 
                     string rosterName = dialog.rostername;
-                    var mappings = dialog.Mappings;
-                    var service = App.GetDataService();
+                    var mappings = dialog.Mappings.ToList();
+
+                    // 名簿構成を保存
+                    await service.SaveRosterConfigAsync(new Models.RosterConfig 
+                    { 
+                        RosterName = rosterName, 
+                        Mappings = mappings 
+                    });
 
                     using (var fs = new FileStream(selectedFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     using (var workbook = new XLWorkbook(fs))
@@ -52,15 +63,34 @@ namespace fluid_general.Pages
                         progressBar.Visibility = Visibility.Visible;
                         int progress = 0;
 
+                        var idMapping = mappings.FirstOrDefault(m => m.Label == "ID");
                         var snMapping = mappings.FirstOrDefault(m => m.Label == "学籍番号");
                         var nameMapping = mappings.FirstOrDefault(m => m.Label == "名前");
                         var kanaMapping = mappings.FirstOrDefault(m => m.Label == "名前（かな）");
-                        var customMappings = mappings.Where(m => m.Label != "学籍番号" && m.Label != "名前" && m.Label != "名前（かな）").ToList();
+                        var customMappings = mappings.Where(m => m.Label != "ID" && m.Label != "学籍番号" && m.Label != "名前" && m.Label != "名前（かな）").ToList();
 
                         foreach (var row in rows)
                         {
                             var member = new Models.Member { RosterName = rosterName };
                             
+                            if (idMapping != null)
+                            {
+                                var cell = row.Cell(idMapping.ColumnIndex);
+                                if (!cell.IsEmpty())
+                                {
+                                    // 数値として取得を試みる
+                                    if (cell.DataType == XLDataType.Number)
+                                    {
+                                        member.ExcelId = (int)cell.GetDouble();
+                                    }
+                                    else
+                                    {
+                                        string idStr = cell.GetValue<string>();
+                                        if (int.TryParse(idStr, out int id)) member.ExcelId = id;
+                                        else if (double.TryParse(idStr, out double dId)) member.ExcelId = (int)dId;
+                                    }
+                                }
+                            }
                             if (snMapping != null) member.StudentNumber = row.Cell(snMapping.ColumnIndex).GetValue<string>();
                             if (nameMapping != null) member.Name = row.Cell(nameMapping.ColumnIndex).GetValue<string>();
                             if (kanaMapping != null) member.Kana = row.Cell(kanaMapping.ColumnIndex).GetValue<string>();
@@ -124,7 +154,9 @@ namespace fluid_general.Pages
 
         private async void RosterOption(string selectedRosterName)
         {
-            var dialog = new RosterDialog(selectedRosterName);
+            var service = App.GetDataService();
+            var config = await service.GetRosterConfigAsync(selectedRosterName);
+            var dialog = new RosterDialog(selectedRosterName, config?.Mappings);
             var result = await dialog.ShowAsync();
 
             if (result == ContentDialogResult.Primary)
@@ -134,7 +166,6 @@ namespace fluid_general.Pages
                 {
                     try
                     {
-                        var service = App.GetDataService();
                         var members = await service.GetMembersByRosterAsync(selectedRosterName);
                         foreach (var member in members)
                         {
