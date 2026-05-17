@@ -10,7 +10,7 @@ namespace fluid_general.Services
 {
     public static class DiscoveryService
     {
-        private const int DiscoveryPort = 5001;
+        private const int DiscoveryPort = 51501;
         private const string DiscoveryRequest = "DISCOVER_FLUID_PARENT";
         private const string DiscoveryResponse = "FLUID_PARENT_ALIVE";
 
@@ -86,12 +86,18 @@ namespace fluid_general.Services
             
             try
             {
-                await client.SendAsync(data, data.Length, endPoint);
-
-                // 2秒間応答を待つ
                 var startTime = DateTime.Now;
+                var lastSendTime = DateTime.MinValue;
+
+                // 2秒間応答を待つ（パケットロスト対策で定期的にブロードキャスト送信）
                 while ((DateTime.Now - startTime).TotalMilliseconds < 2000)
                 {
+                    if ((DateTime.Now - lastSendTime).TotalMilliseconds > 500)
+                    {
+                        await client.SendAsync(data, data.Length, endPoint);
+                        lastSendTime = DateTime.Now;
+                    }
+
                     if (client.Available > 0)
                     {
                         var result = await client.ReceiveAsync();
@@ -117,7 +123,7 @@ namespace fluid_general.Services
                             }
                         }
                     }
-                    await Task.Delay(100);
+                    await Task.Delay(50);
                 }
             }
             catch (Exception ex)
