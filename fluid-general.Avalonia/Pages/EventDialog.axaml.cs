@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using fluid_general.Models;
 
 namespace fluid_general.Avalonia.Pages;
 
@@ -14,11 +15,29 @@ public partial class EventDialog : Window
     public string SelectedRoster { get; private set; } = string.Empty;
     public bool IsSaved { get; private set; }
 
+    private readonly EventConfig? _editingEvent;
+    private string _rosterToSelect = string.Empty;
+
     public EventDialog()
     {
         InitializeComponent();
         EventDatePicker.SelectedDate = DateTime.Now;
         _ = LoadRostersAsync();
+    }
+
+    public EventDialog(EventConfig editingEvent)
+    {
+        InitializeComponent();
+        _editingEvent = editingEvent;
+        EventDatePicker.SelectedDate = editingEvent.EventDate;
+        _rosterToSelect = editingEvent.RosterName;
+        
+        _ = LoadRostersAsync();
+        
+        // Populate fields
+        EventNameTextBox.Text = editingEvent.EventName;
+        DialogTitle.Text = "イベントの編集";
+        Title = "イベントの編集";
     }
 
     private async Task LoadRostersAsync()
@@ -36,7 +55,14 @@ public partial class EventDialog : Window
             RosterComboBox.ItemsSource = rosters;
             if (rosters.Count > 0)
             {
-                RosterComboBox.SelectedIndex = 0;
+                if (!string.IsNullOrEmpty(_rosterToSelect) && rosters.Contains(_rosterToSelect))
+                {
+                    RosterComboBox.SelectedItem = _rosterToSelect;
+                }
+                else
+                {
+                    RosterComboBox.SelectedIndex = 0;
+                }
             }
         }
         catch (Exception ex)
@@ -45,14 +71,31 @@ public partial class EventDialog : Window
         }
     }
 
-    private void OnSaveClick(object? sender, RoutedEventArgs e)
+    private async void OnSaveClick(object? sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(EventNameTextBox.Text))
         {
             return;
         }
 
-        EventName = EventNameTextBox.Text;
+        var name = EventNameTextBox.Text.Trim();
+        try
+        {
+            var service = App.GetDataService();
+            var events = await service.GetEventsAsync();
+            if (events.Any(ev => ev.EventName == name && (_editingEvent == null || ev.Id != _editingEvent.Id)))
+            {
+                EventNameTextBox.Text = string.Empty;
+                EventNameTextBox.Watermark = "同名のイベントが存在します！";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            fluid_general.Utils.AppEnv.LogError(ex);
+        }
+
+        EventName = name;
         
         // DateTimeOffset? から DateTime への変換
         if (EventDatePicker.SelectedDate.HasValue)

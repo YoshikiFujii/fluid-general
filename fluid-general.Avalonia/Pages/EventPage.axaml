@@ -37,6 +37,14 @@
                 <DataGridTextColumn Header="名簿" Binding="{Binding RosterName}" Width="150" />
                 <DataGridTextColumn Header="状態" Binding="{Binding Status}" Width="120" />
             </DataGrid.Columns>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="開く" Click="OnOpenEventClick"/>
+                    <MenuItem Header="編集" Click="OnEditEventClick"/>
+                    <Separator/>
+                    <MenuItem Header="削除" Click="OnDeleteEventClick" Foreground="Red"/>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
         </DataGrid>
     </Grid>
 </UserControl>

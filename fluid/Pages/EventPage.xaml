@@ -93,7 +93,7 @@
                 HeadersVisibility="column"
                 IsReadOnly="True"
                 ItemsSource="{Binding Events}"
-                MouseLeftButtonUp="TextBlock_MouseLeftButtonUp"
+                MouseDoubleClick="EventList_MouseDoubleClick"
                 SelectionMode="Single"
                 SelectionUnit="FullRow"
                 Visibility="Visible">
@@ -129,8 +129,9 @@
                 </DataGrid.Columns>
                 <DataGrid.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Click="DeleteMenuItem_Click" Header="削除" />
                         <MenuItem Click="Event_Open" Header="開く" />
+                        <MenuItem Click="EditMenuItem_Click" Header="編集" />
+                        <MenuItem Click="DeleteMenuItem_Click" Header="削除" />
                     </ContextMenu>
                 </DataGrid.ContextMenu>
             </DataGrid>

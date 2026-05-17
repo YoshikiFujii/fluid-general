@@ -7,6 +7,8 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace fluid_general.Pages
 {
@@ -24,7 +26,7 @@ namespace fluid_general.Pages
             UpdateEventListVisibility();
         }
 
-        private void TextBlock_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void EventList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (EventList.SelectedItem != null)
             {
@@ -149,6 +151,35 @@ namespace fluid_general.Pages
                     .Where(ev => ev.EventName.IndexOf(queryText, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
                 EventList.ItemsSource = filteredEvents;
+            }
+        }
+
+
+        private async void EditMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (EventList.SelectedItem is fluid_general.Models.EventConfig selectedEvent)
+            {
+                var dialog = new EventDialog(selectedEvent);
+                var result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.Primary)
+                {
+                    selectedEvent.EventName = dialog.EventName;
+                    selectedEvent.EventDate = dialog.EventDate;
+                    selectedEvent.RosterName = dialog.Roster;
+
+                    try
+                    {
+                        var service = fluid_general.App.GetDataService();
+                        await service.UpdateEventAsync(selectedEvent);
+                        await LoadEventsAsync();
+                        MessageBox.Show("イベントの編集に成功しました。");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"イベントの編集に失敗しました: {ex.Message}");
+                    }
+                }
             }
         }
 

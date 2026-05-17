@@ -93,4 +93,58 @@ public partial class EventPage : UserControl
             // ここではシンプルに新しいウィンドウを開くだけにします
         }
     }
+
+    private void OnOpenEventClick(object? sender, RoutedEventArgs e)
+    {
+        if (EventGrid.SelectedItem is EventConfig selected)
+        {
+            var eventWindow = new EventWindow(selected);
+            eventWindow.Show();
+        }
+    }
+
+    private async void OnEditEventClick(object? sender, RoutedEventArgs e)
+    {
+        if (EventGrid.SelectedItem is EventConfig selected)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            var dialog = new EventDialog(selected);
+            await dialog.ShowDialog(topLevel as Window ?? throw new System.InvalidOperationException());
+
+            if (dialog.IsSaved)
+            {
+                selected.EventName = dialog.EventName;
+                selected.EventDate = dialog.EventDate;
+                selected.RosterName = dialog.SelectedRoster;
+
+                try
+                {
+                    var service = App.GetDataService();
+                    await service.UpdateEventAsync(selected);
+                    await LoadEventsAsync();
+                }
+                catch (System.Exception ex)
+                {
+                    fluid_general.Utils.AppEnv.LogError(ex);
+                }
+            }
+        }
+    }
+
+    private async void OnDeleteEventClick(object? sender, RoutedEventArgs e)
+    {
+        if (EventGrid.SelectedItem is EventConfig selected)
+        {
+            try
+            {
+                var service = App.GetDataService();
+                await service.DeleteEventAsync(selected.Id);
+                await LoadEventsAsync();
+            }
+            catch (System.Exception ex)
+            {
+                fluid_general.Utils.AppEnv.LogError(ex);
+            }
+        }
+    }
 }
