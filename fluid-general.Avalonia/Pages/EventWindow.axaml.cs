@@ -253,61 +253,102 @@ public partial class EventWindow : Window
         ImageBehavior.SetAnimatedSource(StatusAnimation, new Uri("avares://fluid-general.Avalonia/Assets/searching.gif"));
 
         bool success = false;
+        SerialPort? connectedPort = null;
+
         await Task.Run(async () =>
         {
             int retryCount = 0;
             while (retryCount < 5 && !success)
             {
                 string[] ports = SerialPort.GetPortNames();
-                foreach (string portName in ports)
+                
+                // 1. スマートなフィルタリング (macOS/Linux用無関係な仮想・無線ポートの除外)
+                var candidates = new List<string>();
+                foreach (var portName in ports)
                 {
-                    try
+                    string lower = portName.ToLower();
+                    // Bluetooth, wlan, iphone, incoming 等をスキップ
+                    if (lower.Contains("bluetooth") || lower.Contains("incoming") || lower.Contains("wlan") || lower.Contains("iphone"))
                     {
-                        var port = new SerialPort(portName)
-                        {
-                            BaudRate = 115200,
-                            Parity = Parity.None,
-                            DataBits = 8,
-                            StopBits = StopBits.One,
-                            Handshake = Handshake.None,
-                            ReadTimeout = 2000,
-                            WriteTimeout = 2000,
-                            NewLine = "\n"
-                        };
+                        continue;
+                    }
+                    candidates.Add(portName);
+                }
 
-                        await Task.Delay(200);
-                        port.Open();
+                if (candidates.Count == 0)
+                {
+                    retryCount++;
+                    await Task.Delay(1000);
+                    continue;
+                }
 
-                        port.DiscardInBuffer();
-                        port.DiscardOutBuffer();
-                        port.Write(QueryMessage + "\n");
-                        
-                        string response = "";
-                        int attempts = 0;
-                        while (attempts < 10)
+                // 2. 並列スキャンの実行 (各候補に対して非同期タスクを同時に走らせる)
+                using (var cts = new System.Threading.CancellationTokenSource())
+                {
+                    var tasks = new List<Task<SerialPort?>>();
+                    foreach (var portName in candidates)
+                    {
+                        tasks.Add(Task.Run(async () =>
                         {
                             try
                             {
-                                response = port.ReadLine().Trim();
-                                break;
-                            }
-                            catch (TimeoutException)
-                            {
-                                await Task.Delay(100);
-                                attempts++;
-                            }
-                        }
+                                var port = new SerialPort(portName)
+                                {
+                                    BaudRate = 115200,
+                                    Parity = Parity.None,
+                                    DataBits = 8,
+                                    StopBits = StopBits.One,
+                                    Handshake = Handshake.None,
+                                    ReadTimeout = 1000,
+                                    WriteTimeout = 1000,
+                                    NewLine = "\n"
+                                };
 
-                        if (response.Contains(ExpectedResponse))
-                        {
-                            _serialPort = port;
-                            success = true;
-                            break;
-                        }
-                        
-                        port.Close();
+                                // マイコンの起動・安定化を待機
+                                await Task.Delay(200, cts.Token);
+                                if (cts.IsCancellationRequested) return null;
+
+                                port.Open();
+
+                                port.DiscardInBuffer();
+                                port.DiscardOutBuffer();
+                                port.Write(QueryMessage + "\n");
+
+                                string response = "";
+                                int attempts = 0;
+                                while (attempts < 5 && !cts.IsCancellationRequested)
+                                {
+                                    try
+                                    {
+                                        response = port.ReadLine().Trim();
+                                        if (response.Contains(ExpectedResponse))
+                                        {
+                                            cts.Cancel(); // 他の全並列タスクを速やかに終了させる
+                                            return port;
+                                        }
+                                        break;
+                                    }
+                                    catch (TimeoutException)
+                                    {
+                                        await Task.Delay(100, cts.Token);
+                                        attempts++;
+                                    }
+                                }
+
+                                port.Close();
+                            }
+                            catch { }
+                            return null;
+                        }));
                     }
-                    catch { }
+
+                    var results = await Task.WhenAll(tasks);
+                    connectedPort = results.FirstOrDefault(p => p != null);
+                    if (connectedPort != null)
+                    {
+                        success = true;
+                        break;
+                    }
                 }
 
                 if (!success)
@@ -318,8 +359,9 @@ public partial class EventWindow : Window
             }
         });
 
-        if (success && _serialPort != null && _serialPort.IsOpen)
+        if (success && connectedPort != null && connectedPort.IsOpen)
         {
+            _serialPort = connectedPort;
             CertificationLabel.Text = "接続完了";
             CertificationLabel2.Text = "学生証をタッチしてください";
             ImageBehavior.SetAnimatedSource(StatusAnimation, new Uri("avares://fluid-general.Avalonia/Assets/waiting.gif"));
@@ -330,7 +372,7 @@ public partial class EventWindow : Window
         else
         {
             CertificationLabel.Text = "端末が見つかりません";
-            CertificationLabel2.Text = "再試行してください";
+            CertificationLabel2.Text = "";
             ImageBehavior.SetAnimatedSource(StatusAnimation, null!);
         }
         AddTerminalButton.IsEnabled = true;
