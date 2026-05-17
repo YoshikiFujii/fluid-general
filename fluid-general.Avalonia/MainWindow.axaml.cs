@@ -23,6 +23,11 @@ public partial class MainWindow : Window
         NavigateTo("Event");
     }
 
+    private void Header_PointerPressed(object? sender, global::Avalonia.Input.PointerPressedEventArgs e)
+    {
+        BeginMoveDrag(e);
+    }
+
     public void UpdateTitle()
     {
         string baseTitle = "Fluid General";
