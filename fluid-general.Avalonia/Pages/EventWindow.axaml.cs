@@ -282,17 +282,21 @@ public partial class EventWindow : Window
                     continue;
                 }
 
-                // 2. 並列スキャンの実行 (各候補に対して非同期タスクを同時に走らせる)
+                // 2. 並列スキャンの実行 (TaskCompletionSource を使って、成功した最初のポートを最速で受け取る)
+                var tcs = new TaskCompletionSource<SerialPort?>();
+                int activeTasksCount = candidates.Count;
+                var lockObj = new object();
+
                 using (var cts = new System.Threading.CancellationTokenSource())
                 {
-                    var tasks = new List<Task<SerialPort?>>();
                     foreach (var portName in candidates)
                     {
-                        tasks.Add(Task.Run(async () =>
+                        _ = Task.Run(async () =>
                         {
+                            SerialPort? port = null;
                             try
                             {
-                                var port = new SerialPort(portName)
+                                port = new SerialPort(portName)
                                 {
                                     BaudRate = 115200,
                                     Parity = Parity.None,
@@ -306,7 +310,11 @@ public partial class EventWindow : Window
 
                                 // マイコンの起動・安定化を待機
                                 await Task.Delay(200, cts.Token);
-                                if (cts.IsCancellationRequested) return null;
+                                if (cts.IsCancellationRequested)
+                                {
+                                    port.Dispose();
+                                    return;
+                                }
 
                                 port.Open();
 
@@ -323,8 +331,9 @@ public partial class EventWindow : Window
                                         response = port.ReadLine().Trim();
                                         if (response.Contains(ExpectedResponse))
                                         {
-                                            cts.Cancel(); // 他の全並列タスクを速やかに終了させる
-                                            return port;
+                                            cts.Cancel(); // 他の全タスクにキャンセル要求を送る
+                                            tcs.TrySetResult(port); // 成功ポートを即座に確定！
+                                            return;
                                         }
                                         break;
                                     }
@@ -336,14 +345,28 @@ public partial class EventWindow : Window
                                 }
 
                                 port.Close();
+                                port.Dispose();
                             }
-                            catch { }
-                            return null;
-                        }));
+                            catch
+                            {
+                                try { port?.Dispose(); } catch { }
+                            }
+                            finally
+                            {
+                                lock (lockObj)
+                                {
+                                    activeTasksCount--;
+                                    if (activeTasksCount == 0)
+                                    {
+                                        tcs.TrySetResult(null); // 全タスク終了しても成功しなかった場合
+                                    }
+                                }
+                            }
+                        });
                     }
 
-                    var results = await Task.WhenAll(tasks);
-                    connectedPort = results.FirstOrDefault(p => p != null);
+                    // いずれかのポートが成功するか、全ポートが失敗するのを待つ (Hangingポートの完了を待たない！)
+                    connectedPort = await tcs.Task;
                     if (connectedPort != null)
                     {
                         success = true;
