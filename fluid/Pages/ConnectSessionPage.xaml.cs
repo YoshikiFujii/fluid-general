@@ -141,7 +141,7 @@ namespace fluid_general.Pages
                 if (start != -1 && end != -1)
                 {
                     string ip = selectedText.Substring(start + 1, end - start - 1);
-                    string url = $"http://{ip}:5010/";
+                    string url = $"http://{ip}:5000/";
                     await ProcessConnectionAsync(url);
                 }
             }

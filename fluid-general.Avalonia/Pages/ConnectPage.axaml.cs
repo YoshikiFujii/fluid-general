@@ -135,7 +135,7 @@ public partial class ConnectPage : UserControl
     {
         if (ParentListBox.SelectedItem is ParentInfo parent)
         {
-            string url = $"http://{parent.Ip}:5010/";
+            string url = $"http://{parent.Ip}:5000/";
             await ProcessConnectionAsync(url);
         }
     }

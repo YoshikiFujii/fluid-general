@@ -36,7 +36,7 @@
                     <TextBlock Text="親機のIPアドレスまたはホスト名を入力して接続します。" FontSize="14" Foreground="Gray"/>
                     
                     <Grid ColumnDefinitions="*, Auto" MaxWidth="500" HorizontalAlignment="Left">
-                        <TextBox x:Name="ServerAddressTextBox" Watermark="例: http://192.168.1.10:5010" Height="40" VerticalContentAlignment="Center"/>
+                        <TextBox x:Name="ServerAddressTextBox" Watermark="例: http://192.168.1.10:5000" Height="40" VerticalContentAlignment="Center"/>
                         <Button Grid.Column="1" Content="接続" Click="OnConnectClick" Classes="accent" Margin="10,0,0,0" Width="100" Height="40"/>
                     </Grid>
                 </StackPanel>

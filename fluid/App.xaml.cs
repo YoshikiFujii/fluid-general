@@ -108,7 +108,7 @@ namespace fluid_general
                         services.AddTransient<Services.IDataService, Services.LocalDataService>();
                     });
                     // ポート5000で待ち受け（必要に応じて設定から読み込む形に変更可）
-                    webBuilder.UseUrls("http://0.0.0.0:5010"); 
+                    webBuilder.UseUrls("http://0.0.0.0:5000"); 
                 })
                 .Build();
         }

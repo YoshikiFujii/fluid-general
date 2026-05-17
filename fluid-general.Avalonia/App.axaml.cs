@@ -160,7 +160,7 @@ public partial class App : Application
                         services.AddDbContext<AppDbContext>();
                         services.AddTransient<IDataService, LocalDataService>();
                     });
-                    webBuilder.UseUrls("http://0.0.0.0:5010");
+                    webBuilder.UseUrls("http://0.0.0.0:5000");
                 })
                 .Build();
 

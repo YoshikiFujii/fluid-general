@@ -27,8 +27,8 @@
 
             <TextBox
                 x:Name="ServerAddressTextBox"
-                ui:ControlHelper.Header="親機のURL（例: http://192.168.1.10:5010/）"
-                ui:ControlHelper.PlaceholderText="http://0.0.0.0:5010/" />
+                ui:ControlHelper.Header="親機のURL（例: http://192.168.1.10:5000/）"
+                ui:ControlHelper.PlaceholderText="http://0.0.0.0:5000/" />
 
             <StackPanel Margin="0,20,0,0" Orientation="Horizontal">
                 <Button
