@@ -37,6 +37,7 @@ namespace fluid_general
         public string Department { get; set; }
         public string Year { get; set; }
         public List<string> DisplayValues { get; set; } = new List<string>();
+        public DateTime LastLocalChangeTime { get; set; } = DateTime.MinValue;
 
 
         private bool isRegistered;
@@ -110,6 +111,7 @@ namespace fluid_general
         private System.Media.SoundPlayer player = null;
         private System.Windows.Threading.DispatcherTimer _syncTimer;
         private bool _isSyncing = false;
+        private bool _isUpdatingFromSync = false;
         private int _syncFailureCount = 0;
         private const int MaxSyncFailures = 3;
         SerialPort connectedPort = null;
@@ -625,6 +627,7 @@ namespace fluid_general
                         student.IsRegistered = true;
                         student.IsNotRegistered = false;
                         student.IsAbsent = false;
+                        SaveStatus(student);
                         UpdateProgressBar(student, "参加済み");
                     }
                 }
@@ -806,6 +809,9 @@ namespace fluid_general
         
         private async void SaveStatus(RosterItem rosterItem)
         {
+            if (_isUpdatingFromSync) return;
+            rosterItem.LastLocalChangeTime = DateTime.Now;
+
             try
             {
                 var service = App.GetDataService();
@@ -1103,24 +1109,37 @@ namespace fluid_general
                 var service = App.GetDataService();
                 var logs = await service.GetCheckInLogsAsync(_currentEventConfig.Id);
 
-                // 取得したログを元にRosterItemsの状態を更新
-                foreach (var log in logs)
+                _isUpdatingFromSync = true;
+                try
                 {
-                    var item = RosterItems.FirstOrDefault(r => r.ExcelId == log.ExcelId);
-                    if (item != null)
+                    // 取得したログを元にRosterItemsの状態を更新
+                    foreach (var log in logs)
                     {
-                        bool isRegistered = log.Status == "参加済み";
-                        bool isAbsent = log.Status == "不参加";
-                        bool isNotRegistered = log.Status == "未参加";
-
-                        // 変更がある場合のみプロパティを更新（UI通知を最小限にするため）
-                        if (item.IsRegistered != isRegistered || item.IsAbsent != isAbsent || item.IsNotRegistered != isNotRegistered)
+                        var item = RosterItems.FirstOrDefault(r => r.ExcelId == log.ExcelId);
+                        if (item != null)
                         {
-                            item.IsRegistered = isRegistered;
-                            item.IsAbsent = isAbsent;
-                            item.IsNotRegistered = isNotRegistered;
+                            if (DateTime.Now - item.LastLocalChangeTime < TimeSpan.FromSeconds(5))
+                            {
+                                continue;
+                            }
+
+                            bool isRegistered = log.Status == "参加済み";
+                            bool isAbsent = log.Status == "不参加";
+                            bool isNotRegistered = log.Status == "未参加";
+
+                            // 変更がある場合のみプロパティを更新（UI通知を最小限にするため）
+                            if (item.IsRegistered != isRegistered || item.IsAbsent != isAbsent || item.IsNotRegistered != isNotRegistered)
+                            {
+                                item.IsRegistered = isRegistered;
+                                item.IsAbsent = isAbsent;
+                                item.IsNotRegistered = isNotRegistered;
+                            }
                         }
                     }
+                }
+                finally
+                {
+                    _isUpdatingFromSync = false;
                 }
                 UpdateProgressBar();
 

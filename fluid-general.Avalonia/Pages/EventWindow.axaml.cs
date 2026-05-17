@@ -24,6 +24,7 @@ public class MemberVM : INotifyPropertyChanged
 {
     private string _status = "未参加";
     public Member Member { get; set; } = null!;
+    public DateTime LastLocalChangeTime { get; set; } = DateTime.MinValue;
     
     public string Status 
     { 
@@ -65,6 +66,7 @@ public partial class EventWindow : Window
     private readonly ObservableCollection<MemberVM> _members = new();
     private readonly ObservableCollection<string> _logs = new();
     private List<string> _displayColumns = new();
+    private bool _isUpdatingFromSync = false;
     private SerialPort? _serialPort;
     private const string QueryMessage = "cntfluid";
     private const string ExpectedResponse = "hithere!";
@@ -96,16 +98,13 @@ public partial class EventWindow : Window
 
         _ = LoadDataAsync();
 
-        // 子機モードの場合、定期的に更新を確認する
+        // 定期的に更新を確認する（親機・子機両方）
         var timer = new global::Avalonia.Threading.DispatcherTimer
         {
             Interval = System.TimeSpan.FromSeconds(3)
         };
         timer.Tick += (s, e) => {
-            if (!string.IsNullOrEmpty(fluid_general.Utils.AppEnv.ServerBaseUrl))
-            {
-                _ = LoadDataAsync();
-            }
+            _ = LoadDataAsync();
         };
         timer.Start();
     }
@@ -142,17 +141,30 @@ public partial class EventWindow : Window
             }
             else
             {
-                // 更新（既存のインスタンスの状態を書き換える）
-                foreach (var vm in _members)
+                _isUpdatingFromSync = true;
+                try
                 {
-                    var log = logs.FirstOrDefault(l => l.ExcelId == vm.Member.ExcelId);
-                    string newStatus = log?.Status ?? "未参加";
-                    if (vm.Status != newStatus)
+                    // 更新（既存のインスタンスの状態を書き換える）
+                    foreach (var vm in _members)
                     {
-                        // イベントハンドラによる無限ループを防ぐため、一時的に解除するか
-                        // あるいは Status プロパティ内で変更がない場合は何もしないようにしているので、そのまま代入
-                        vm.Status = newStatus;
+                        if (DateTime.Now - vm.LastLocalChangeTime < TimeSpan.FromSeconds(5))
+                        {
+                            continue;
+                        }
+
+                        var log = logs.FirstOrDefault(l => l.ExcelId == vm.Member.ExcelId);
+                        string newStatus = log?.Status ?? "未参加";
+                        if (vm.Status != newStatus)
+                        {
+                            // イベントハンドラによる無限ループを防ぐため、一時的に解除するか
+                            // あるいは Status プロパティ内で変更がない場合は何もしないようにしているので、そのまま代入
+                            vm.Status = newStatus;
+                        }
                     }
+                }
+                finally
+                {
+                    _isUpdatingFromSync = false;
                 }
             }
 
@@ -170,6 +182,9 @@ public partial class EventWindow : Window
         {
             UpdateStats();
             WriteLog(vm.Status, vm.Member);
+            
+            if (_isUpdatingFromSync) return;
+            vm.LastLocalChangeTime = DateTime.Now;
             
             // DB保存
             try
