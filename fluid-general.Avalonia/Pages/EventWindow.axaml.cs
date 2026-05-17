@@ -624,7 +624,18 @@ public partial class EventWindow : Window
         {
             if (Directory.Exists(LogFolderPath))
             {
-                System.Diagnostics.Process.Start("explorer.exe", LogFolderPath);
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+                {
+                    System.Diagnostics.Process.Start("open", LogFolderPath);
+                }
+                else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", LogFolderPath);
+                }
+                else
+                {
+                    System.Diagnostics.Process.Start("xdg-open", LogFolderPath);
+                }
             }
         }
         catch (Exception ex) { AppEnv.LogError(ex); }
@@ -639,7 +650,18 @@ public partial class EventWindow : Window
 
             if (File.Exists(logFilePath))
             {
-                System.Diagnostics.Process.Start("notepad.exe", logFilePath);
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+                {
+                    System.Diagnostics.Process.Start("open", logFilePath);
+                }
+                else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                {
+                    System.Diagnostics.Process.Start("notepad.exe", logFilePath);
+                }
+                else
+                {
+                    System.Diagnostics.Process.Start("xdg-open", logFilePath);
+                }
             }
         }
         catch (Exception ex) { AppEnv.LogError(ex); }
