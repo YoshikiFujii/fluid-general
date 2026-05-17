@@ -8,6 +8,7 @@ Compression=lzma2
 SolidCompression=yes
 OutputDir=userdocs:Inno Setup Builds
 OutputBaseFilename=FluidGeneralSetup
+SetupIconFile=C:\Project\fluid-general\fluid-general.Avalonia\Assets\large_ico.ico
 
 [Files]
 ; dotnet publishで出力された単一exeを指定
