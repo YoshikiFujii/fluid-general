@@ -551,6 +551,10 @@ public partial class EventWindow : Window
             int r = _random.Next(1, 4);
             PlaySound($"j_{r}.wav");
         }
+        else if (_event.TouchSound == "夢の国")
+        {
+            PlaySound("Disney.wav");
+        }
         else
         {
             PlaySound("Gate_BEEP.wav");

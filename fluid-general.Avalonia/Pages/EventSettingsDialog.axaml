@@ -31,6 +31,7 @@
                 <ComboBox x:Name="TouchSoundComboBox" HorizontalAlignment="Stretch">
                     <ComboBoxItem Content="JR"/>
                     <ComboBoxItem Content="JUGGLER"/>
+                    <ComboBoxItem Content="夢の国"/>
                 </ComboBox>
             </StackPanel>
 

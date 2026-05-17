@@ -121,6 +121,7 @@ namespace fluid_general
         private SoundPlayer Sound3 = null;
         private SoundPlayer Sound4 = null;
         private SoundPlayer Sound5 = null;
+        private SoundPlayer Sound6 = null;
 
         private fluid_general.Models.EventConfig _currentEventConfig;
 
@@ -185,18 +186,21 @@ namespace fluid_general
             string sound3 = "j_3.wav";
             string sound4 = "Gate_BEEP.wav";
             string sound5 = "Gate_Alert.wav";
+            string sound6 = "Disney.wav";
 
             string path1 = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sound", sound1);
             string path2 = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sound", sound2);
             string path3 = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sound", sound3);
             string path4 = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sound", sound4);
             string path5 = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sound", sound5);
+            string path6 = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Sound", sound6);
 
             Sound1 = new SoundPlayer(path1);
             Sound2 = new SoundPlayer(path2);
             Sound3 = new SoundPlayer(path3);
             Sound4 = new SoundPlayer(path4);
             Sound5 = new SoundPlayer(path5);
+            Sound6 = new SoundPlayer(path6);
         }
         public async void AddTerminal(object sender, RoutedEventArgs e)
         {
@@ -471,6 +475,10 @@ namespace fluid_general
                 }
             }
 
+            if (Settings.SoundSetting == "夢の国")
+            {
+                PlaySound(Sound6);
+            }
         }
         //---------------エラーサウンド---------------------
         private void ErrorSound()

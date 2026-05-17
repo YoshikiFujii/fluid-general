@@ -1,4 +1,4 @@
-﻿namespace fluid_general.Pages
+namespace fluid_general.Pages
 {
     /// <summary>
     /// Window1.xaml の相互作用ロジック
@@ -13,6 +13,7 @@
 
             TouchSoundComboBox.Items.Add("JR");
             TouchSoundComboBox.Items.Add("JUGGLER");
+            TouchSoundComboBox.Items.Add("夢の国");
 
             // 初期値を設定
             if (currentSettings != null) //currentSettingsがnullの場合の対策

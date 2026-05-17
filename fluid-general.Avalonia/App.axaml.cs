@@ -220,7 +220,7 @@ public partial class App : Application
         string soundDir = System.IO.Path.Combine(AppEnv.AppDataPath, "Sound");
         if (!System.IO.Directory.Exists(soundDir)) System.IO.Directory.CreateDirectory(soundDir);
 
-        string[] sounds = { "Gate_Alert.wav", "Gate_BEEP.wav", "j_1.wav", "j_2.wav", "j_3.wav" };
+        string[] sounds = { "Gate_Alert.wav", "Gate_BEEP.wav", "j_1.wav", "j_2.wav", "j_3.wav", "Disney.wav" };
         foreach (var sound in sounds)
         {
             string targetPath = System.IO.Path.Combine(soundDir, sound);
