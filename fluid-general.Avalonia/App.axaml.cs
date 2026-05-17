@@ -156,7 +156,8 @@ public partial class App : Application
                     });
                     webBuilder.ConfigureServices(services =>
                     {
-                        services.AddControllers();
+                        services.AddControllers()
+                            .AddApplicationPart(typeof(fluid_general.Api.MembersController).Assembly);
                         services.AddDbContext<AppDbContext>();
                         services.AddTransient<IDataService, LocalDataService>();
                     });
