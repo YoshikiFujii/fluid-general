@@ -1,0 +1,59 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="480"
+        x:Class="fluid_general.Avalonia.Pages.UpdateDialog"
+        Title="アップデートのご案内"
+        Width="450" Height="480"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1e1e1e"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+    
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *, Auto" Margin="30">
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,15">
+                <TextBlock Text="アップデートの確認" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                <TextBlock x:Name="VersionText" Text="新しいバージョン v1.1.0 が利用可能です！" FontSize="13" Foreground="LightGray" Opacity="0.8"/>
+            </StackPanel>
+            
+            <!-- Content Area -->
+            <Grid Grid.Row="1" RowDefinitions="*, Auto">
+                <!-- Release Notes -->
+                <Border Grid.Row="0" Background="#11FFFFFF" BorderBrush="#22FFFFFF" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,15">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="■ 更新内容・リリースノート" FontSize="12" FontWeight="Bold" Foreground="#0078D4"/>
+                            <TextBlock x:Name="ReleaseNotesText" Text="・ここに更新内容が表示されます。" FontSize="12" Foreground="White" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Download Progress Overlay -->
+                <StackPanel Grid.Row="1" x:Name="ProgressArea" Spacing="10" IsVisible="False" Margin="0,0,0,15">
+                    <TextBlock x:Name="StatusText" Text="アップデートをダウンロード中 (0%)..." FontSize="12" Foreground="LightGray"/>
+                    <ProgressBar x:Name="DownloadProgressBar" Value="0" Minimum="0" Maximum="100" Height="8" ShowProgressText="False" Background="#22FFFFFF" Foreground="#0078D4" CornerRadius="4"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Buttons -->
+            <UniformGrid Grid.Row="2" x:Name="ButtonArea" Columns="2">
+                <Button Content="後で" Click="OnCancelClick" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,10" Margin="0,0,5,0" CornerRadius="4"/>
+                <Button Content="今すぐアップデート" Click="OnUpdateClick" Background="#0078D4" Foreground="White" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Padding="0,10" Margin="5,0,0,0" CornerRadius="4"/>
+            </UniformGrid>
+        </Grid>
+    </Panel>
+</Window>

@@ -4,6 +4,7 @@ using Avalonia.Media;
 using Avalonia.Layout;
 using fluid_general.Avalonia.Pages;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace fluid_general.Avalonia;
 
@@ -21,6 +22,9 @@ public partial class MainWindow : Window
 
         // Default page
         NavigateTo("Event");
+
+        // アプリ起動時の自動アップデート確認
+        CheckForUpdatesOnStartupAsync();
     }
 
     private void Header_PointerPressed(object? sender, global::Avalonia.Input.PointerPressedEventArgs e)
@@ -90,6 +94,28 @@ public partial class MainWindow : Window
         if (NaviList.SelectedItem is ListBoxItem item && item.Tag is string tag)
         {
             NavigateTo(tag);
+        }
+    }
+
+    private async void CheckForUpdatesOnStartupAsync()
+    {
+        try
+        {
+            var currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+            
+            // メイン画面の読み込みが完全に完了するまで少し待つ
+            await Task.Delay(1000);
+            
+            var result = await fluid_general.Services.UpdateCheckerService.CheckForUpdatesAsync(currentVersion);
+            if (result.IsNewVersionAvailable)
+            {
+                var dialog = new UpdateDialog(result);
+                await dialog.ShowDialog(this);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            fluid_general.Utils.AppEnv.LogError(ex);
         }
     }
 }

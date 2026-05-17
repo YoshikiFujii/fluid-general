@@ -82,25 +82,3 @@ graph TD
 # ソリューション全体のビルド
 dotnet build fluid-general.sln
 ```
-
----
-
-## 📦 リリース・パッケージング方法
-
-詳細なリリース手順は [リリース方法.md](file:///c:/Project/fluid-general/FluidGeneral%E3%82%BB%E3%83%83%E3%83%88%E3%82%A2%E3%83%83%E3%83%97%E9%96%A2%E4%BF%82/%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E6%96%B9%E6%B3%95.md) に記載されています。
-
-### Windows 向け発行
-```bash
-dotnet publish fluid-general.Avalonia/fluid-general.Avalonia.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true
-```
-発行後、Inno Setup を利用して `FluidGeneral.iss` からインストーラーをビルドします。
-
-### macOS 向け発行
-```bash
-# Apple Silicon (M1/M2/M3...) 向け
-dotnet publish fluid-general.Avalonia/fluid-general.Avalonia.csproj -c Release -r osx-arm64 --self-contained true
-
-# Intel Mac 向け
-dotnet publish fluid-general.Avalonia/fluid-general.Avalonia.csproj -c Release -r osx-x64 --self-contained true
-```
-発行後、ドラッグ＆ドロップでインプレースインストール可能な `.dmg` ディスクイメージファイルを組み立てます。
