@@ -367,4 +367,10 @@ FodyWeavers.xsd
 **/.DS_Store
 
 # Temporary build errors
-*.error
+*.error
+
+# Build artifacts & installers
+**/*.dmg
+**/*.app/
+**/publish/
+
