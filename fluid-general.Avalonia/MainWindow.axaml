@@ -32,7 +32,10 @@
                 <DockPanel Margin="0,40,0,0">
                     <!-- Navigation Menu -->
                     <StackPanel DockPanel.Dock="Top" Spacing="5" Margin="10">
-                        <TextBlock Text="Fluid General" FontSize="18" FontWeight="Bold" Margin="10,0,0,20" Foreground="White"/>
+                        <StackPanel Margin="10,0,0,20" Spacing="2">
+                            <TextBlock Text="Fluid General" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock x:Name="IpAddressText" Text="" FontSize="11" Foreground="#AAFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
                         
                         <ListBox x:Name="NaviList" Background="Transparent" BorderThickness="0" SelectionChanged="NaviList_SelectionChanged">
                             <ListBox.Styles>

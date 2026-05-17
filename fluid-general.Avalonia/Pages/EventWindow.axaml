@@ -19,6 +19,7 @@
                 <RadioButton Content="不参加" IsChecked="{Binding IsAbsent}" GroupName="{Binding Member.ExcelId}"/>
             </StackPanel>
         </DataTemplate>
+        <StreamGeometry x:Key="LinkIcon">M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z</StreamGeometry>
     </Window.Resources>
 
     <Panel>
@@ -33,26 +34,60 @@
         </ExperimentalAcrylicBorder>
 
         <Grid RowDefinitions="Auto, *">
-            <!-- Menu Bar -->
-            <Menu Grid.Row="0" Background="#22FFFFFF">
-                <MenuItem Header="ファイル">
-                    <MenuItem Header="エクスポート" Click="OnExportClick" />
-                    <MenuItem Header="インポート" Click="OnImportClick" />
-                    <Separator/>
-                    <MenuItem Header="終了" Click="OnCloseClick" />
-                </MenuItem>
-                <MenuItem Header="設定">
-                    <MenuItem Header="詳細設定" Click="OnDetailedSettingsClick" />
-                    <MenuItem Header="表示設定" Click="OnDisplaySettingsClick" />
-                </MenuItem>
-                <MenuItem Header="ツール">
-                    <MenuItem Header="ログフォルダを開く" Click="OnOpenLogFolderClick" />
-                    <MenuItem Header="ログファイルを開く" Click="OnOpenLogFileClick" />
-                    <MenuItem Header="ログファイルを削除" Click="OnDeleteLogFileClick" />
-                    <Separator/>
-                    <MenuItem Header="履歴表示をクリア" Click="OnClearLogClick" />
-                </MenuItem>
-            </Menu>
+            <!-- Header Grid: Menu & Connected Terminals -->
+            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Background="#22FFFFFF">
+                <!-- Menu Bar -->
+                <Menu Grid.Column="0" Background="Transparent">
+                    <MenuItem Header="ファイル">
+                        <MenuItem Header="エクスポート" Click="OnExportClick" />
+                        <MenuItem Header="インポート" Click="OnImportClick" />
+                        <Separator/>
+                        <MenuItem Header="終了" Click="OnCloseClick" />
+                    </MenuItem>
+                    <MenuItem Header="設定">
+                        <MenuItem Header="詳細設定" Click="OnDetailedSettingsClick" />
+                        <MenuItem Header="表示設定" Click="OnDisplaySettingsClick" />
+                    </MenuItem>
+                    <MenuItem Header="ツール">
+                        <MenuItem Header="ログフォルダを開く" Click="OnOpenLogFolderClick" />
+                        <MenuItem Header="ログファイルを開く" Click="OnOpenLogFileClick" />
+                        <MenuItem Header="ログファイルを削除" Click="OnDeleteLogFileClick" />
+                        <Separator/>
+                        <MenuItem Header="履歴表示をクリア" Click="OnClearLogClick" />
+                    </MenuItem>
+                </Menu>
+
+                <!-- Connected Terminals Button -->
+                <Button Grid.Column="1" 
+                        x:Name="ConnectionStatusButton"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Padding="12,0"
+                        VerticalAlignment="Stretch"
+                        IsVisible="False">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                            <StackPanel Width="200" Spacing="10" Margin="5">
+                                <TextBlock Text="接続中の子機" FontWeight="Bold" Foreground="White"/>
+                                <ListBox x:Name="ActiveTerminalsListBox" Background="Transparent" BorderThickness="0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <PathIcon Data="{StaticResource LinkIcon}" Foreground="LightGray" Width="14" Height="14"/>
+                                                <TextBlock Text="{Binding}" VerticalAlignment="Center" Foreground="White" FontSize="12"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <PathIcon Data="{StaticResource LinkIcon}" Foreground="White" Width="16" Height="16"/>
+                        <TextBlock x:Name="ConnectionCountTextBlock" Text="0" FontWeight="Bold" VerticalAlignment="Center" Foreground="White"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
 
             <Grid Grid.Row="1" ColumnDefinitions="350, *">
                 <!-- Left Panel: Info & Stats -->

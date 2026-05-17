@@ -26,14 +26,26 @@ public partial class MainWindow : Window
     public void UpdateTitle()
     {
         string baseTitle = "Fluid General";
+        string localIp = fluid_general.Utils.NetworkUtils.GetLocalIPAddress();
+
         if (string.IsNullOrEmpty(fluid_general.Utils.AppEnv.ServerBaseUrl))
         {
-            string localIp = fluid_general.Utils.NetworkUtils.GetLocalIPAddress();
             Title = string.IsNullOrEmpty(localIp) ? $"{baseTitle} - 親機モード" : $"{baseTitle} - 親機モード (IP: {localIp})";
+            if (IpAddressText != null)
+            {
+                IpAddressText.Text = string.IsNullOrEmpty(localIp) ? "親機モード" : $"親機 IP: {localIp}";
+            }
         }
         else
         {
-            Title = $"{baseTitle} - 子機モード (接続先: {fluid_general.Utils.AppEnv.ServerBaseUrl})";
+            string serverUrl = fluid_general.Utils.AppEnv.ServerBaseUrl;
+            Title = $"{baseTitle} - 子機モード (接続先: {serverUrl})";
+            if (IpAddressText != null)
+            {
+                IpAddressText.Text = string.IsNullOrEmpty(localIp) 
+                    ? $"子機モード (接続先: {serverUrl})" 
+                    : $"子機 IP: {localIp}\n(接続先: {serverUrl})";
+            }
         }
     }
 

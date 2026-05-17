@@ -22,6 +22,29 @@ public partial class App : Application
     private static DispatcherTimer? _connectionWatchdog;
     private static int _syncFailureCount = 0;
     private const int MaxSyncFailures = 3;
+    
+    private static System.Collections.Concurrent.ConcurrentDictionary<string, (string Name, DateTime LastSeen)> _activeTerminals = new();
+
+    public static void RegisterTerminalActivity(string ip, string? name)
+    {
+        if (string.IsNullOrEmpty(ip) || ip == "::1" || ip == "127.0.0.1") return;
+        _activeTerminals[ip] = (name ?? "Unknown", DateTime.Now);
+    }
+
+    public static int GetActiveConnectionCount()
+    {
+        var threshold = DateTime.Now.AddSeconds(-30);
+        return _activeTerminals.Values.Count(v => v.LastSeen > threshold);
+    }
+
+    public static System.Collections.Generic.List<string> GetActiveTerminalList()
+    {
+        var threshold = DateTime.Now.AddSeconds(-30);
+        return _activeTerminals
+            .Where(kvp => kvp.Value.LastSeen > threshold)
+            .Select(kvp => $"{kvp.Value.Name} ({kvp.Key})")
+            .ToList();
+    }
 
     public static IDataService GetDataService()
     {
@@ -152,6 +175,14 @@ public partial class App : Application
                     webBuilder.Configure(app =>
                     {
                         app.UseRouting();
+                        // 端末のアクティビティを記録するミドルウェア
+                        app.Use(async (context, next) =>
+                        {
+                            string? ip = context.Connection.RemoteIpAddress?.ToString();
+                            string? name = context.Request.Headers["X-Fluid-MachineName"].FirstOrDefault();
+                            if (ip != null) RegisterTerminalActivity(ip, name);
+                            await next();
+                        });
                         app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
                     });
                     webBuilder.ConfigureServices(services =>

@@ -206,6 +206,37 @@ public partial class EventWindow : Window
         
         WholeStatusText.Text = $"{checkedIn} / {total}";
         WholeProgressBar.Value = total > 0 ? (double)checkedIn / total * 100 : 0;
+
+        UpdateConnectionStatus();
+    }
+
+    private void UpdateConnectionStatus()
+    {
+        if (string.IsNullOrEmpty(AppEnv.ServerBaseUrl))
+        {
+            // 親機モードの場合のみ接続数を表示
+            int count = App.GetActiveConnectionCount();
+            if (ConnectionCountTextBlock != null)
+            {
+                ConnectionCountTextBlock.Text = count.ToString();
+            }
+            if (ConnectionStatusButton != null)
+            {
+                ConnectionStatusButton.IsVisible = count > 0;
+            }
+
+            if (count > 0 && ActiveTerminalsListBox != null)
+            {
+                ActiveTerminalsListBox.ItemsSource = App.GetActiveTerminalList();
+            }
+        }
+        else
+        {
+            if (ConnectionStatusButton != null)
+            {
+                ConnectionStatusButton.IsVisible = false;
+            }
+        }
     }
 
     private void WriteLog(string status, Member member)
