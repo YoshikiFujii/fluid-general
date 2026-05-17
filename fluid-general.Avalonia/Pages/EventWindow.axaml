@@ -36,14 +36,21 @@
             <!-- Menu Bar -->
             <Menu Grid.Row="0" Background="#22FFFFFF">
                 <MenuItem Header="ファイル">
-                    <MenuItem Header="エクスポート" />
-                    <MenuItem Header="インポート" />
+                    <MenuItem Header="エクスポート" Click="OnExportClick" />
+                    <MenuItem Header="インポート" Click="OnImportClick" />
                     <Separator/>
                     <MenuItem Header="終了" Click="OnCloseClick" />
                 </MenuItem>
                 <MenuItem Header="設定">
                     <MenuItem Header="詳細設定" Click="OnDetailedSettingsClick" />
                     <MenuItem Header="表示設定" Click="OnDisplaySettingsClick" />
+                </MenuItem>
+                <MenuItem Header="ツール">
+                    <MenuItem Header="ログフォルダを開く" Click="OnOpenLogFolderClick" />
+                    <MenuItem Header="ログファイルを開く" Click="OnOpenLogFileClick" />
+                    <MenuItem Header="ログファイルを削除" Click="OnDeleteLogFileClick" />
+                    <Separator/>
+                    <MenuItem Header="履歴表示をクリア" Click="OnClearLogClick" />
                 </MenuItem>
             </Menu>
 
@@ -71,7 +78,13 @@
                     <!-- History Log -->
                     <Border Grid.Row="2" Background="#15FFFFFF" CornerRadius="12" Padding="15">
                         <Grid RowDefinitions="Auto, *">
-                            <TextBlock Grid.Row="0" Text="履歴" FontSize="18" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+                            <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,10">
+                                <TextBlock Text="履歴" FontSize="18" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                                    <Button Content="📄 ファイルを開く" Click="OnOpenLogFileClick" FontSize="11" Padding="8,4" Background="#20FFFFFF" Foreground="White" CornerRadius="4"/>
+                                    <Button Content="📁 フォルダを開く" Click="OnOpenLogFolderClick" FontSize="11" Padding="8,4" Background="#20FFFFFF" Foreground="White" CornerRadius="4"/>
+                                </StackPanel>
+                            </Grid>
                             <ListBox Grid.Row="1" x:Name="LogListBox" Background="Transparent" BorderThickness="0">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
@@ -89,7 +102,7 @@
                     <Border Grid.Row="0" Background="#15FFFFFF" CornerRadius="12" Margin="0,0,0,20" x:Name="CertificationBorder">
                         <Grid>
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="15">
-                                <Image x:Name="StatusAnimation" Width="200" Height="200" anim:ImageBehavior.AnimatedSource="avares://fluid-general.Avalonia/Assets/waiting.gif" />
+                                <Image x:Name="StatusAnimation" Width="200" Height="200" />
                                 <TextBlock x:Name="CertificationLabel" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="White" TextAlignment="Center"/>
                                 <TextBlock x:Name="CertificationLabel2" FontSize="16" HorizontalAlignment="Center" Foreground="LightGray" TextAlignment="Center"/>
                             </StackPanel>
@@ -106,10 +119,13 @@
                         <Grid RowDefinitions="Auto, *">
                             <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,10">
                                 <TextBlock Text="参加者リスト" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="White"/>
-                                <TextBox Grid.Column="1" x:Name="SearchBox" Margin="20,0" Watermark="名前・学籍番号で検索..." MaxWidth="300" HorizontalAlignment="Left" TextChanged="OnSearchTextChanged"/>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
-                                    <CheckBox Content="参加済み" IsChecked="True"/>
-                                    <CheckBox Content="未参加" IsChecked="True"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" Margin="20,0">
+                                    <TextBox x:Name="SearchBox" Watermark="名前・学籍番号で検索..." Width="250" VerticalAlignment="Center" TextChanged="OnSearchTextChanged"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <CheckBox x:Name="ShowRegisteredCheckBox" Content="参加済み" IsChecked="True" IsCheckedChanged="OnFilterChanged"/>
+                                        <CheckBox x:Name="ShowNotRegisteredCheckBox" Content="未参加" IsChecked="True" IsCheckedChanged="OnFilterChanged"/>
+                                        <CheckBox x:Name="ShowAbsentCheckBox" Content="不参加" IsChecked="True" IsCheckedChanged="OnFilterChanged"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </Grid>
                             

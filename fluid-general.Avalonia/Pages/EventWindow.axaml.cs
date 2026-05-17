@@ -70,6 +70,7 @@ public partial class EventWindow : Window
     private const string ExpectedResponse = "hithere!";
     private readonly Player _player = new();
     private readonly Random _random = new();
+    private readonly string LogFolderPath = Path.Combine(AppEnv.AppDataPath, "log");
 
     public EventWindow()
     {
@@ -81,6 +82,11 @@ public partial class EventWindow : Window
     {
         InitializeComponent();
         _event = ev;
+
+        if (!Directory.Exists(LogFolderPath))
+        {
+            try { Directory.CreateDirectory(LogFolderPath); } catch { }
+        }
         
         EventTitleText.Text = ev.EventName;
         EventDateText.Text = ev.EventDate.ToString("yyyy/MM/dd");
@@ -192,6 +198,25 @@ public partial class EventWindow : Window
         string time = DateTime.Now.ToString("HH:mm:ss");
         _logs.Insert(0, $"[{time}] {status}: {member.Name}");
         if (_logs.Count > 100) _logs.RemoveAt(100);
+
+        try
+        {
+            string logFile = $"{_event.EventName}.txt";
+            string logFilePath = Path.Combine(LogFolderPath, logFile);
+            string currentTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            
+            string room = "";
+            if (member.CustomFields.TryGetValue("部屋", out var r1)) room = r1;
+            else if (member.CustomFields.TryGetValue("部屋番号", out var r2)) room = r2;
+            else if (member.CustomFields.TryGetValue("RoomNumber", out var r3)) room = r3;
+
+            string logEntry = $"{currentTime}, {room}, {member.Name}, {status}\n";
+            File.AppendAllText(logFilePath, logEntry);
+        }
+        catch (Exception ex)
+        {
+            AppEnv.LogError(ex);
+        }
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -227,36 +252,73 @@ public partial class EventWindow : Window
         CertificationLabel.Text = "端末を検索中...";
         ImageBehavior.SetAnimatedSource(StatusAnimation, new Uri("avares://fluid-general.Avalonia/Assets/searching.gif"));
 
+        bool success = false;
         await Task.Run(async () =>
         {
-            string[] ports = SerialPort.GetPortNames();
-            foreach (string portName in ports)
+            int retryCount = 0;
+            while (retryCount < 5 && !success)
             {
-                try
+                string[] ports = SerialPort.GetPortNames();
+                foreach (string portName in ports)
                 {
-                    var port = new SerialPort(portName)
+                    try
                     {
-                        BaudRate = 115200,
-                        ReadTimeout = 2000,
-                        WriteTimeout = 2000
-                    };
-                    port.Open();
-                    port.Write(QueryMessage + "\n");
-                    
-                    await Task.Delay(500);
-                    string response = port.ReadExisting();
-                    if (response.Contains(ExpectedResponse))
-                    {
-                        _serialPort = port;
-                        break;
+                        var port = new SerialPort(portName)
+                        {
+                            BaudRate = 115200,
+                            Parity = Parity.None,
+                            DataBits = 8,
+                            StopBits = StopBits.One,
+                            Handshake = Handshake.None,
+                            ReadTimeout = 2000,
+                            WriteTimeout = 2000,
+                            NewLine = "\n"
+                        };
+
+                        await Task.Delay(200);
+                        port.Open();
+
+                        port.DiscardInBuffer();
+                        port.DiscardOutBuffer();
+                        port.Write(QueryMessage + "\n");
+                        
+                        string response = "";
+                        int attempts = 0;
+                        while (attempts < 10)
+                        {
+                            try
+                            {
+                                response = port.ReadLine().Trim();
+                                break;
+                            }
+                            catch (TimeoutException)
+                            {
+                                await Task.Delay(100);
+                                attempts++;
+                            }
+                        }
+
+                        if (response.Contains(ExpectedResponse))
+                        {
+                            _serialPort = port;
+                            success = true;
+                            break;
+                        }
+                        
+                        port.Close();
                     }
-                    port.Close();
+                    catch { }
                 }
-                catch { }
+
+                if (!success)
+                {
+                    retryCount++;
+                    await Task.Delay(1000);
+                }
             }
         });
 
-        if (_serialPort != null && _serialPort.IsOpen)
+        if (success && _serialPort != null && _serialPort.IsOpen)
         {
             CertificationLabel.Text = "接続完了";
             CertificationLabel2.Text = "学生証をタッチしてください";
@@ -269,7 +331,7 @@ public partial class EventWindow : Window
         {
             CertificationLabel.Text = "端末が見つかりません";
             CertificationLabel2.Text = "再試行してください";
-            ImageBehavior.SetAnimatedSource(StatusAnimation, new Uri("avares://fluid-general.Avalonia/Assets/waiting.gif"));
+            ImageBehavior.SetAnimatedSource(StatusAnimation, null!);
         }
         AddTerminalButton.IsEnabled = true;
     }
@@ -278,19 +340,35 @@ public partial class EventWindow : Window
     {
         if (_serialPort == null) return;
         
-        while (_serialPort != null && _serialPort.IsOpen)
+        await Task.Run(async () =>
         {
-            try
+            while (_serialPort != null && _serialPort.IsOpen)
             {
-                if (_serialPort.BytesToRead > 0)
+                try
                 {
-                    string data = _serialPort.ReadLine().Trim();
-                    await Dispatcher.UIThread.InvokeAsync(() => HandleNfcData(data));
+                    if (_serialPort.BytesToRead > 0)
+                    {
+                        int availableBytes = _serialPort.BytesToRead;
+                        byte[] buffer = new byte[availableBytes];
+                        int bytesRead = _serialPort.Read(buffer, 0, buffer.Length);
+                        
+                        string data = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                        if (!string.IsNullOrEmpty(data))
+                        {
+                            data = data.Trim();
+                            await Dispatcher.UIThread.InvokeAsync(() => HandleNfcData(data));
+                        }
+                    }
                 }
+                catch (Exception)
+                {
+                    break;
+                }
+                await Task.Delay(100);
             }
-            catch { }
-            await Task.Delay(100);
-        }
+            
+            await Dispatcher.UIThread.InvokeAsync(() => DisconnectTerminal());
+        });
     }
 
     private string _lastStudentNumber = "";
@@ -299,7 +377,28 @@ public partial class EventWindow : Window
     {
         if (string.IsNullOrEmpty(data)) return;
 
-        // 学籍番号の整形
+        if (data == "000000000")
+        {
+            CertificationLabel.Text = "認証エラー";
+            CertificationLabel2.Text = "学生証以外が認識されました。再度試してください。";
+            CertificationBorder.Background = Brushes.Crimson;
+            PlaySound("Gate_Alert.wav");
+            
+            _ = Task.Delay(3000).ContinueWith(_ => Dispatcher.UIThread.InvokeAsync(() => CertificationBorder.Background = new SolidColorBrush(Color.FromArgb(21, 255, 255, 255))));
+            return;
+        }
+
+        if (data == "E0001")
+        {
+            CertificationLabel.Text = "スキャナーエラー";
+            CertificationLabel2.Text = "NFCスキャナを再接続してください。";
+            CertificationBorder.Background = Brushes.Gold;
+            PlaySound("Gate_Alert.wav");
+            
+            _ = Task.Delay(3000).ContinueWith(_ => Dispatcher.UIThread.InvokeAsync(() => CertificationBorder.Background = new SolidColorBrush(Color.FromArgb(21, 255, 255, 255))));
+            return;
+        }
+
         string studentNumber = data;
         if (studentNumber.Length > 2) studentNumber = studentNumber.Substring(0, studentNumber.Length - 2);
 
@@ -331,7 +430,6 @@ public partial class EventWindow : Window
 
         _lastStudentNumber = studentNumber;
 
-        // 数秒後に背景を戻す
         _ = Task.Delay(3000).ContinueWith(_ => Dispatcher.UIThread.InvokeAsync(() => CertificationBorder.Background = new SolidColorBrush(Color.FromArgb(21, 255, 255, 255))));
     }
 
@@ -361,21 +459,56 @@ public partial class EventWindow : Window
         catch (Exception ex) { AppEnv.LogError(ex); }
     }
 
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        DisconnectTerminal();
+        base.OnClosing(e);
+    }
+
     private void DisconnectTerminal()
     {
-        _serialPort?.Close();
+        if (_serialPort != null && _serialPort.IsOpen)
+        {
+            try
+            {
+                _serialPort.Write("111111111\n");
+            }
+            catch { }
+            try
+            {
+                _serialPort.Close();
+            }
+            catch { }
+        }
         _serialPort = null;
         AddTerminalButton.Content = "端末接続";
         ShutdownButton.IsVisible = false;
         CertificationLabel.Text = "";
         CertificationLabel2.Text = "";
-        ImageBehavior.SetAnimatedSource(StatusAnimation, new Uri("avares://fluid-general.Avalonia/Assets/waiting.gif"));
+        ImageBehavior.SetAnimatedSource(StatusAnimation, null!);
     }
 
     private void OnShutdownTerminalClick(object sender, RoutedEventArgs e)
     {
-        _serialPort?.Write("222222222\n");
-        DisconnectTerminal();
+        if (_serialPort != null && _serialPort.IsOpen)
+        {
+            try
+            {
+                _serialPort.Write("222222222\n");
+            }
+            catch { }
+            try
+            {
+                _serialPort.Close();
+            }
+            catch { }
+        }
+        _serialPort = null;
+        AddTerminalButton.Content = "端末接続";
+        ShutdownButton.IsVisible = false;
+        CertificationLabel.Text = "";
+        CertificationLabel2.Text = "";
+        ImageBehavior.SetAnimatedSource(StatusAnimation, null!);
     }
 
     private async Task RebuildColumnsAsync()
@@ -408,19 +541,38 @@ public partial class EventWindow : Window
 
     private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
     {
+        ApplyFilters();
+    }
+
+    private void OnFilterChanged(object? sender, RoutedEventArgs e)
+    {
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
         string query = SearchBox.Text?.ToLower() ?? "";
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            MemberGrid.ItemsSource = _members;
-            return;
-        }
+        bool showRegistered = ShowRegisteredCheckBox.IsChecked == true;
+        bool showNotRegistered = ShowNotRegisteredCheckBox.IsChecked == true;
+        bool showAbsent = ShowAbsentCheckBox.IsChecked == true;
 
         var filtered = _members.Where(vm =>
-            (vm.Member.Name?.ToLower().Contains(query) == true) ||
-            (vm.Member.StudentNumber?.ToLower().Contains(query) == true) ||
-            (vm.Member.Kana?.ToLower().Contains(query) == true) ||
-            (vm.Member.CustomFields.Values.Any(v => v?.ToLower().Contains(query) == true))
-        ).ToList();
+        {
+            // Status filter
+            bool statusMatch = (vm.Status == "参加済み" && showRegistered) ||
+                             (vm.Status == "未参加" && showNotRegistered) ||
+                             (vm.Status == "不参加" && showAbsent);
+            
+            if (!statusMatch) return false;
+
+            // Search query filter
+            if (string.IsNullOrWhiteSpace(query)) return true;
+
+            return (vm.Member.Name?.ToLower().Contains(query) == true) ||
+                   (vm.Member.StudentNumber?.ToLower().Contains(query) == true) ||
+                   (vm.Member.Kana?.ToLower().Contains(query) == true) ||
+                   (vm.Member.CustomFields.Values.Any(v => v?.ToLower().Contains(query) == true));
+        }).ToList();
 
         MemberGrid.ItemsSource = filtered;
     }
@@ -448,5 +600,69 @@ public partial class EventWindow : Window
             }
         }
         catch (Exception ex) { AppEnv.LogError(ex); }
+    }
+
+    private async void OnImportClick(object? sender, RoutedEventArgs e)
+    {
+        var dialog = new ImportDialog(_event);
+        await dialog.ShowDialog(this);
+        if (dialog.IsImportSuccessful)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async void OnExportClick(object? sender, RoutedEventArgs e)
+    {
+        var dialog = new ExportListDialog(_event);
+        await dialog.ShowDialog(this);
+    }
+
+    private void OnOpenLogFolderClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (Directory.Exists(LogFolderPath))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", LogFolderPath);
+            }
+        }
+        catch (Exception ex) { AppEnv.LogError(ex); }
+    }
+
+    private void OnOpenLogFileClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string logFile = $"{_event.EventName}.txt";
+            string logFilePath = Path.Combine(LogFolderPath, logFile);
+
+            if (File.Exists(logFilePath))
+            {
+                System.Diagnostics.Process.Start("notepad.exe", logFilePath);
+            }
+        }
+        catch (Exception ex) { AppEnv.LogError(ex); }
+    }
+
+    private void OnDeleteLogFileClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            string logFile = $"{_event.EventName}.txt";
+            string logFilePath = Path.Combine(LogFolderPath, logFile);
+
+            if (File.Exists(logFilePath))
+            {
+                File.Delete(logFilePath);
+                _logs.Clear();
+            }
+        }
+        catch (Exception ex) { AppEnv.LogError(ex); }
+    }
+
+    private void OnClearLogClick(object? sender, RoutedEventArgs e)
+    {
+        _logs.Clear();
     }
 }

@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="400"
+        x:Class="fluid_general.Avalonia.Pages.ImportDialog"
+        Title="一括インポート"
+        Width="450" Height="450"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1E1E1E"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *, Auto" Margin="30">
+            <StackPanel Grid.Row="0" Spacing="5" Margin="0,10,0,20">
+                <TextBlock Text="Excelからの一括インポート" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="Excelの1列目にあるデータを読み込み、ステータスを一括更新します。" FontSize="12" Foreground="LightGray" TextWrapping="Wrap"/>
+            </StackPanel>
+            
+            <StackPanel Grid.Row="1" Spacing="15">
+                <StackPanel Spacing="5">
+                    <TextBlock Text="Excelファイル" FontSize="14" Foreground="White"/>
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBox x:Name="FilePathTextBox" IsReadOnly="True" Watermark="ファイルを選択してください..."/>
+                        <Button Grid.Column="1" Content="参照" Click="OnBrowseClick" Margin="10,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Spacing="5">
+                    <TextBlock Text="登録に使用する項目" FontSize="14" Foreground="White"/>
+                    <ComboBox x:Name="MatchColumnComboBox" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <StackPanel Spacing="5">
+                    <TextBlock Text="変更後のステータス" FontSize="14" Foreground="White"/>
+                    <ComboBox x:Name="TargetStatusComboBox" HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="参加済み" IsSelected="True"/>
+                        <ComboBoxItem Content="未参加"/>
+                        <ComboBoxItem Content="不参加"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <ProgressBar x:Name="ImportProgressBar" IsVisible="False" Height="10" Margin="0,10,0,0"/>
+                <TextBlock x:Name="StatusMessage" FontSize="12" Foreground="DodgerBlue" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,20,0,0">
+                <Button Content="キャンセル" Click="OnCancelClick" Width="100"/>
+                <Button x:Name="ExecuteButton" Content="実行" Click="OnExecuteClick" Classes="accent" Width="100"/>
+            </StackPanel>
+        </Grid>
+    </Panel>
+</Window>

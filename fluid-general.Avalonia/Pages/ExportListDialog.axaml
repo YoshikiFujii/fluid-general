@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:pages="clr-namespace:fluid_general.Avalonia.Pages"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="600"
+        x:Class="fluid_general.Avalonia.Pages.ExportListDialog"
+        Title="Excelエクスポート"
+        Width="450" Height="650"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#1E1E1E"
+        TransparencyLevelHint="AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True">
+
+    <Panel>
+        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+            <ExperimentalAcrylicBorder.Material>
+                <ExperimentalAcrylicMaterial
+                    BackgroundSource="Digger"
+                    TintColor="Black"
+                    TintOpacity="0.8"
+                    MaterialOpacity="0.6" />
+            </ExperimentalAcrylicBorder.Material>
+        </ExperimentalAcrylicBorder>
+
+        <Grid RowDefinitions="Auto, *, Auto, Auto" Margin="30">
+            <StackPanel Grid.Row="0" Spacing="5" Margin="0,10,0,20">
+                <TextBlock Text="Excelエクスポート" FontSize="20" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="出力する項目と条件を選択してください。" FontSize="12" Foreground="LightGray"/>
+            </StackPanel>
+            
+            <Grid Grid.Row="1" RowDefinitions="Auto, *">
+                <TextBlock Grid.Row="0" Text="出力項目" FontSize="14" Foreground="White" Margin="0,0,0,5"/>
+                <ListBox Grid.Row="1" x:Name="ColumnsListBox" Background="#15FFFFFF" CornerRadius="8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="pages:ColumnItemVM">
+                            <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}" Foreground="White"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <StackPanel Grid.Row="2" Margin="0,20,0,0" Spacing="10">
+                <TextBlock Text="対象ステータス" FontSize="14" Foreground="White"/>
+                <StackPanel Orientation="Horizontal" Spacing="20">
+                    <CheckBox x:Name="CheckedCheckBox" Content="参加済み" IsChecked="True"/>
+                    <CheckBox x:Name="UncheckedCheckBox" Content="未参加" IsChecked="True"/>
+                    <CheckBox x:Name="AbsentCheckBox" Content="不参加" IsChecked="True"/>
+                </StackPanel>
+                
+                <CheckBox x:Name="DetailCheckBox" Content="詳細情報（集計）を含める" IsChecked="True" Margin="0,10,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,30,0,0">
+                <Button Content="キャンセル" Click="OnCancelClick" Width="100"/>
+                <Button Content="エクスポート" Click="OnExportClick" Classes="accent" Width="100"/>
+            </StackPanel>
+        </Grid>
+    </Panel>
+</Window>

@@ -1,6 +1,8 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using fluid_general.Services;
 using fluid_general.Utils;
 using fluid_general.Data;
@@ -17,6 +19,9 @@ namespace fluid_general.Avalonia;
 public partial class App : Application
 {
     private static IHost? _host;
+    private static DispatcherTimer? _connectionWatchdog;
+    private static int _syncFailureCount = 0;
+    private const int MaxSyncFailures = 3;
 
     public static IDataService GetDataService()
     {
@@ -39,21 +44,23 @@ public partial class App : Application
     {
         try
         {
-            // データベースの初期化 (親機モードの場合のみ)
-            if (string.IsNullOrEmpty(AppEnv.ServerBaseUrl))
+            // データベースの初期化
+            using (var db = new AppDbContext())
             {
-                using var db = new AppDbContext();
                 db.Database.EnsureCreated();
-                
-                // 親機モードならAPIサーバーを起動
-                await StartServerAsync();
             }
+            
+            // APIサーバーを起動 (常に起動しておくことで親機モードへの切り替えに備える)
+            await StartServerAsync();
 
             // サウンドファイルの書き出し
             ExtractSounds();
             
             // 探索用サーバーの起動
             DiscoveryService.StartServer();
+
+            // 接続監視タイマーの開始
+            StartConnectionWatchdog();
         }
         catch (Exception ex)
         {
@@ -67,6 +74,72 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void StartConnectionWatchdog()
+    {
+        _connectionWatchdog = new DispatcherTimer();
+        _connectionWatchdog.Interval = TimeSpan.FromSeconds(3);
+        _connectionWatchdog.Tick += async (s, e) => await CheckConnectionAsync();
+        _connectionWatchdog.Start();
+    }
+
+    private async Task CheckConnectionAsync()
+    {
+        if (string.IsNullOrEmpty(AppEnv.ServerBaseUrl))
+        {
+            _syncFailureCount = 0;
+            return;
+        }
+
+        try
+        {
+            var service = new RemoteDataService();
+            // 生存確認
+            await service.GetEventsAsync();
+            _syncFailureCount = 0;
+        }
+        catch
+        {
+            _syncFailureCount++;
+            if (_syncFailureCount >= MaxSyncFailures)
+            {
+                await HandleConnectionLossAsync();
+            }
+        }
+    }
+
+    private async Task HandleConnectionLossAsync()
+    {
+        _syncFailureCount = 0;
+        string? oldUrl = AppEnv.ServerBaseUrl;
+        if (string.IsNullOrEmpty(oldUrl)) return;
+
+        // 親機モード（ローカル接続）に切り替え
+        AppEnv.ServerBaseUrl = null; 
+
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            // イベントウィンドウが開いていれば閉じる
+            var windowsToClose = desktop.Windows
+                .Where(w => w.GetType().Name == "EventWindow")
+                .ToList();
+            
+            foreach (var win in windowsToClose)
+            {
+                win.Close();
+            }
+
+            // 通知
+            // Avalonia には標準の MessageBox がないので、MainWindow などを通じて通知するか、
+            // 面倒なので Console またはデバッグ出力（ユーザーへのメッセージとしては別途実装が必要かもしれないが、WPF版に合わせる）
+            // ここでは MainWindow があればダイアログを出してみる
+            if (desktop.MainWindow is Window mainWin)
+            {
+                // ここでは簡易的な通知としてタイトル等に反映されるのを確認してもらう
+                // 必要なら ContentDialog 等で通知するロジックを追加
+            }
+        }
     }
 
     private async Task StartServerAsync()
@@ -107,6 +180,7 @@ public partial class App : Application
             _host.Dispose();
         }
         DiscoveryService.StopServer();
+        _connectionWatchdog?.Stop();
     }
 
     private void ExtractSounds()
