@@ -435,7 +435,6 @@ public partial class EventWindow : Window
             CertificationLabel2.Text = "学生証をタッチしてください";
             ImageBehavior.SetAnimatedSource(StatusAnimation, new Uri("avares://fluid-general.Avalonia/Assets/waiting.gif"));
             AddTerminalButton.Content = "切断";
-            ShutdownButton.IsVisible = true;
             _ = ReceiveDataLoop();
         }
         else
@@ -597,34 +596,12 @@ public partial class EventWindow : Window
         }
         _serialPort = null;
         AddTerminalButton.Content = "端末接続";
-        ShutdownButton.IsVisible = false;
         CertificationLabel.Text = "";
         CertificationLabel2.Text = "";
         ImageBehavior.SetAnimatedSource(StatusAnimation, null!);
     }
 
-    private void OnShutdownTerminalClick(object sender, RoutedEventArgs e)
-    {
-        if (_serialPort != null && _serialPort.IsOpen)
-        {
-            try
-            {
-                _serialPort.Write("222222222\n");
-            }
-            catch { }
-            try
-            {
-                _serialPort.Close();
-            }
-            catch { }
-        }
-        _serialPort = null;
-        AddTerminalButton.Content = "端末接続";
-        ShutdownButton.IsVisible = false;
-        CertificationLabel.Text = "";
-        CertificationLabel2.Text = "";
-        ImageBehavior.SetAnimatedSource(StatusAnimation, null!);
-    }
+
 
     private async Task RebuildColumnsAsync()
     {

@@ -144,7 +144,6 @@
                             
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20" Spacing="10">
                                 <Button x:Name="AddTerminalButton" Content="端末接続" Click="OnAddTerminalClick" Classes="accent"/>
-                                <Button x:Name="ShutdownButton" Content="終了" Click="OnShutdownTerminalClick" IsVisible="False"/>
                             </StackPanel>
                         </Grid>
                     </Border>
