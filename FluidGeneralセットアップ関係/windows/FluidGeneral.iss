@@ -1,6 +1,6 @@
 [Setup]
 AppName=Fluid General
-AppVersion=1.0
+AppVersion=1.1.0
 DefaultDirName={autopf}\FluidGeneral
 DefaultGroupName=Fluid General
 UninstallDisplayIcon={app}\fluid-general.Avalonia.exe
