@@ -72,6 +72,7 @@ public partial class EventWindow : Window
     private const string ExpectedResponse = "hithere!";
     private readonly Player _player = new();
     private readonly Random _random = new();
+    private int SoundCount = 0;
     private readonly string LogFolderPath = Path.Combine(AppEnv.AppDataPath, "log");
 
     public EventWindow()
@@ -547,8 +548,30 @@ public partial class EventWindow : Window
     {
         if (_event.TouchSound == "JUGGLER")
         {
-            int r = _random.Next(1, 4);
-            PlaySound($"j_{r}.wav");
+            if (SoundCount == 0)
+            {
+                PlaySound("j_1.wav");
+                SoundCount++;
+            }
+            else if (SoundCount == 1 || SoundCount == 2 || SoundCount == 3)
+            {
+                PlaySound("j_2.wav");
+                SoundCount++;
+            }
+            else
+            {
+                int num = _random.Next(1, 5);
+                SoundCount = _random.Next(4, 8);
+                if (num == 4)
+                {
+                    PlaySound("j_3.wav");
+                }
+                else
+                {
+                    PlaySound("j_1.wav");
+                    SoundCount = 1;
+                }
+            }
         }
         else if (_event.TouchSound == "夢の国")
         {
