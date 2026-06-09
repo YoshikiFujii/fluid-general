@@ -373,4 +373,9 @@ FodyWeavers.xsd
 **/*.dmg
 **/*.app/
 **/publish/
+
+# Local History
+.history/
+**/.history/
+
 
