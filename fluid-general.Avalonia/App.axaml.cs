@@ -180,6 +180,7 @@ public partial class App : Application
                         {
                             string? ip = context.Connection.RemoteIpAddress?.ToString();
                             string? name = context.Request.Headers["X-Fluid-MachineName"].FirstOrDefault();
+                            if (name != null) name = Uri.UnescapeDataString(name);
                             if (ip != null) RegisterTerminalActivity(ip, name);
                             await next();
                         });

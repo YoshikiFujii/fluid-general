@@ -68,7 +68,7 @@ public partial class ConnectPage : UserControl
         {
             using var client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(5);
-            client.DefaultRequestHeaders.Add("X-Fluid-MachineName", Environment.MachineName);
+            client.DefaultRequestHeaders.Add("X-Fluid-MachineName", Uri.EscapeDataString(Environment.MachineName));
             
             // 親機のAPIを叩いて生存確認 (名簿取得APIなどで代用)
             var response = await client.GetAsync($"{url}api/members");

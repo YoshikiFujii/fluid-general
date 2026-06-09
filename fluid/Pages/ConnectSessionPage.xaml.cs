@@ -51,7 +51,7 @@ namespace fluid_general.Pages
             {
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(5);
-                client.DefaultRequestHeaders.Add("X-Fluid-MachineName", Environment.MachineName);
+                client.DefaultRequestHeaders.Add("X-Fluid-MachineName", Uri.EscapeDataString(Environment.MachineName));
                 
                 // 親機のAPIを叩いて生存確認
                 var response = await client.GetAsync($"{url}api/members");
