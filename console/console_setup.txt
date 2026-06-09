@@ -1,0 +1,119 @@
+1.ラズパイOS書き込む(ユーザ名：user1パスワード：1001,wifiの設定はしておくといい。あとSSHは有効にしとく。認証方法はパスワードで)
+↓gpio to usbシリアル通信有効化
+config.txtの最後>>	enable_uart=1
+cmdline.txtの最初>>	console=serial0,115200　（あったら書かなくていい）
+
+2.起動と準備（TeraTermのSSHから操作する。やりかたはググれば出る）
+>sudo apt update
+>sudo apt upgrade
+>sudo apt-get install pip
+>sudo pip install --break-system-packages pyserial(シリアル通信用)
+>sudo raspi-config
+→3.InterfaceOption→P6 Serial Port→login...が出るので 'いいえ'　→serial interface...がでるので'はい'
+
+3.シリアル通信テスト
+GPIOからusbに変換するモジュール（UART）を使い、接続。今回は"PL2303 USB UART (type-c)"というのを使った。
+windowsのデフォルトのドライバで動くため、追加のドライバはいらない。デバイスマネージャー＞ポート＞serial comportみたいのを見つけ、COM何番かを確認。
+TeraTermのシリアルから、さっきのCOMを選択。設定＞シリアルポート＞スピードを115200に設定
+Test.pyを実行し、シリアルポートのTeraTermにこんにちはと出るのを確認。（文字化けして出たらさっきのスピードの設定ができてない）
+
+##test.py
+import serial
+import serial.tools.list_ports
+
+port_name="/dev/serial0"
+Serial_Port=serial.Serial(port=port_name, baudrate=115200, parity='N') #portオープン
+test_code="こんにちは"
+test_code=test_code.encode('utf-8')
+Serial_Port.write(test_code)
+
+
+>sudo pip install --break-system-packages nfcpy
+>sudo apt-get install -y git
+>git clone https://github.com/nfcpy/nfcpy.git
+(NFCリーダーの権限設定。PaSoRi S380とS330の両方に対応)
+>sudo sh -c 'cat <<EOF > /etc/udev/rules.d/nfcdev.rules
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="06c3", GROUP="plugdev", MODE="0666"
+SUBSYSTEM=="usb", ACTION=="add", ATTRS{idVendor}=="054c", ATTRS{idProduct}=="02e1", GROUP="plugdev", MODE="0666"
+EOF'
+>sudo usermod -aG plugdev user1
+>sudo usermod -aG dialout user1 (シリアル通信用)
+(競合するスマートカードサービスの停止)
+>sudo systemctl stop pcscd
+>sudo systemctl stop pcscd.socket
+>sudo systemctl disable pcscd
+(ルールの反映。一度リーダーを抜いてから実行)
+>sudo udevadm control --reload-rules
+>sudo udevadm trigger
+
+再起動
+>lsusb
+でnfcリーダーっぽい名前が出てたらOK
+認識してるかのテストプログラムを走らせる（例は下のプログラム
+
+##main.py
+
+
+import nfc
+
+def on_connect(tag: nfc.tag.Tag) -> None:
+    print("\n".join(tag.dump()))
+
+with nfc.ContactlessFrontend("usb") as clf:
+    clf.connect(rdwr={"on-connect": on_connect})
+
+>python3 main.py
+
+
+起動時プログラム自動起動の設定
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+raspberrypi zero wを使う場合はpcとの通信にポート：serial0 が使われるが、zero 2wの場合は ttyS0が使われる。
+そのためfluid.pyの１０行目を適宜編集
+
+zero w の場合  PORT_NAME = "/dev/serial0"
+zero 2 wの場合 PORT_NAME = "/dev/ttyS0"
+
+※Windowsアプリ側と通信するために、ハンドシェイク(hithere!)やPING/PONG応答、学籍番号の末尾2文字削除(Substring 0, Length-2)に対応した最新版を使用すること。
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+/home/user1/fluid/fluid.pyにプログラムを配置しておく。
+
+sudo nano /etc/systemd/system/raspberrypi.service
+[Unit]
+Description=fluid console service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/user1/fluid/fluid.py
+WorkingDirectory=/home/user1/fluid
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=user1
+
+[Install]
+WantedBy=multi-user.target
+
+テスト
+sudo systemctl start raspberrypi.service
+sudo systemctl status raspberrypi.service
+
+runningと出たら成功
+終了するときは↓
+sudo systemctl stop raspberrypi.service
+起動時に実行されるように設定
+sudo systemctl enable raspberrypi.service
+無効化は↓
+sudo systemctl disable raspberrypi.service
+
+
+ディスプレイのセットアップ
+numpy
+>apt install python3-numpy (pipで入れようとすると何故かpython2用のが入ってくる)
+Pillow
+(こいつもそのままpipしてもエラー←ライブラリの分際で8時間も手間かけさせやがった)
+>sudo apt-get install libjpeg-dev zlib1g-dev
+>sudo pip3 install --break-system-package Pillow --no-cache-dir
+>sudo pip install -U setuptools ←こいついらなかったかも
+
