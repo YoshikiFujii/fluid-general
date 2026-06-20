@@ -671,6 +671,8 @@ public partial class EventWindow : Window
         bool showNotRegistered = ShowNotRegisteredCheckBox.IsChecked == true;
         bool showAbsent = ShowAbsentCheckBox.IsChecked == true;
 
+        string normalizedQuery = KanaUtils.NormalizeToHiragana(query);
+
         var filtered = _members.Where(vm =>
         {
             // Status filter
@@ -686,6 +688,7 @@ public partial class EventWindow : Window
             return (vm.Member.Name?.ToLower().Contains(query) == true) ||
                    (vm.Member.StudentNumber?.ToLower().Contains(query) == true) ||
                    (vm.Member.Kana?.ToLower().Contains(query) == true) ||
+                   (!string.IsNullOrEmpty(normalizedQuery) && KanaUtils.NormalizeToHiragana(vm.Member.Kana ?? "").Contains(normalizedQuery)) ||
                    (vm.Member.CustomFields.Values.Any(v => v?.ToLower().Contains(query) == true));
         }).ToList();
 

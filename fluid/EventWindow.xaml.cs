@@ -876,11 +876,13 @@ namespace fluid_general
                 return;
             }
 
+            string normalizedQuery = Utils.KanaUtils.NormalizeToHiragana(query);
+
             var filteredList = RosterItems.Where(item =>
                 (item.RoomNumber?.ToLower().Contains(query) == true) ||
                 (item.Name?.ToLower().Contains(query) == true) ||
                 (item.Kana?.ToLower().Contains(query) == true) ||
-                (ConvertToHiragana(item.Kana?.ToLower() ?? "").Contains(query)) ||
+                (!string.IsNullOrEmpty(normalizedQuery) && Utils.KanaUtils.NormalizeToHiragana(item.Kana ?? "").Contains(normalizedQuery)) ||
                 (item.StudentNumber?.ToLower().Contains(query) == true) ||
                 (item.Department?.ToLower().Contains(query) == true) ||
                 (item.Year?.ToLower().Contains(query) == true) ||
@@ -889,33 +891,6 @@ namespace fluid_general
 
             RosterListView.ItemsSource = filteredList;
         }
-        //半角カナを全角かなに変換する関数-----------------------------------------------------------
-        static string ConvertToHiragana(string input)
-        {
-            // (1) 半角カタカナを全角カタカナに変換
-            string fullWidthKatakana = Strings.StrConv(input, VbStrConv.Wide, 0x0411);
-
-            // (2) 全角カタカナをひらがなに変換
-            return KatakanaToHiragana(fullWidthKatakana);
-        }
-
-        static string KatakanaToHiragana(string input)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (char c in input)
-            {
-                if (c >= 0x30A0 && c <= 0x30FF) // カタカナ範囲
-                {
-                    sb.Append((char)(c - 0x60)); // ひらがなへ変換
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-            return sb.ToString();
-        }
-        //--------------------------------------------------------------------------------------------
 
         // フェードアウトの処理を関数化
         private void FadeOutElement(UIElement element, double durationInSeconds)

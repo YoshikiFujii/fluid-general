@@ -117,3 +117,13 @@ Pillow
 >sudo pip3 install --break-system-package Pillow --no-cache-dir
 >sudo pip install -U setuptools ←こいついらなかったかも
 
+
+サーボモーターのセットアップ（ジッター対策のためのpigpio導入）
+>sudo apt-get install -y pigpio python3-pigpio
+>sudo systemctl enable pigpiod
+>sudo systemctl start pigpiod
+
+
+物理シャットダウンボタンのセットアップ
+GPIO 26（物理37番ピン）と GND（物理30, 34, 39番ピンなどの任意のGNDピン）の間にプッシュボタン（タクトスイッチなど）を配線します。
+このボタンが1.5秒間長押しされると、LEDが高速点滅し、サーボが0°（初期位置）に戻った後、安全にOSがシャットダウン（sudo shutdown -h now）します。

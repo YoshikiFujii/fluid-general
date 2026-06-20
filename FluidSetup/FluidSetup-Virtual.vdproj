@@ -16404,7 +16404,7 @@
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:FALSE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.1.0"
+        "ProductVersion" = "8:1.1.1"
         "Manufacturer" = "8:YoshikiFujii"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
